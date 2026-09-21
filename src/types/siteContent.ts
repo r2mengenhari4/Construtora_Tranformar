@@ -79,6 +79,35 @@ export interface AboutContent {
   teamLocation: string;
 }
 
+export interface TestimonialItemContent {
+  id: string;
+  clientName: string;
+  neighborhood: string;
+  rating: number;
+  projectType: string;
+  quote: string;
+  date: string;
+}
+
+export interface TestimonialsContent {
+  tagline: string;
+  title: string;
+  subtitle: string;
+  noticeText: string;
+  items: TestimonialItemContent[];
+}
+
+export interface FaqItemContent {
+  question: string;
+  answer: string;
+}
+
+export interface FaqContent {
+  tagline: string;
+  title: string;
+  items: FaqItemContent[];
+}
+
 export interface ContactContent {
   tagline: string;
   title: string;
@@ -101,6 +130,8 @@ export interface SiteContent {
   services: ServicesContent;
   portfolio: PortfolioContent;
   differentials: DifferentialsContent;
+  testimonials: TestimonialsContent;
+  faq: FaqContent;
   about: AboutContent;
   contact: ContactContent;
 }
@@ -112,5 +143,7 @@ export type SectionTabKey =
   | 'etapas-obra'
   | 'servicos'
   | 'diferenciais'
+  | 'depoimentos'
+  | 'faq'
   | 'sobre'
   | 'contato';

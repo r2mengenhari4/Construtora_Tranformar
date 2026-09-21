@@ -244,6 +244,63 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       }
     ]
   },
+  "testimonials": {
+    "tagline": "Experiência do Cliente",
+    "title": "Quem constrói com a Transformar, recomenda.",
+    "subtitle": "A satisfação de ver o sonho da casa própria realizado com segurança técnica, prazo e tranquilidade.",
+    "noticeText": "Depoimentos e relatos de clientes de obras e projetos Construtora Transformar",
+    "items": [
+      {
+        "id": "depoimento-1",
+        "clientName": "Carlos e Fernanda S.",
+        "neighborhood": "Itaipuaçu (Maricá – RJ)",
+        "rating": 5,
+        "projectType": "Projeto + Construção Completa",
+        "quote": "Compramos nosso terreno em Itaipuaçu e tínhamos muito receio de lidar com obras. A equipe da Transformar cuidou de tudo: desde a aprovação na prefeitura até o piso da área da piscina. Ter o engenheiro presente nos deu total paz de espírito.",
+        "date": "Fevereiro 2026"
+      },
+      {
+        "id": "depoimento-2",
+        "clientName": "Eduardo M.",
+        "neighborhood": "Alphaville Maricá (Maricá – RJ)",
+        "rating": 5,
+        "projectType": "Projeto Arquitetônico e Estrutural",
+        "quote": "O detalhamento dos projetos nos surpreendeu. Na fase do estrutural economizamos muito concreto porque o cálculo foi feito com extrema precisão, sem improvisos. A casa ficou exatamente como a maquete 3D.",
+        "date": "Janeiro 2026"
+      },
+      {
+        "id": "depoimento-3",
+        "clientName": "Renata e Márcio L.",
+        "neighborhood": "Pedra de Inoã (Maricá – RJ)",
+        "rating": 5,
+        "projectType": "Construção Residencial Completa",
+        "quote": "Comunicação transparente em cada etapa. Recebíamos relatórios das compras e fotos semanais da evolução das fundações e alvenaria. Recomendo de olhos fechados para quem quer construir em Maricá.",
+        "date": "Dezembro 2025"
+      }
+    ]
+  },
+  "faq": {
+    "tagline": "Tire suas Dúvidas",
+    "title": "Perguntas Frequentes sobre Construção em Maricá",
+    "items": [
+      {
+        "question": "Vocês cuidam da aprovação do projeto na Prefeitura de Maricá?",
+        "answer": "Sim! Desenvolvemos o projeto legal completo e cuidamos de todo o processo de tramitação e protocolo junto à Secretaria de Urbanismo da Prefeitura de Maricá, bem como das exigências específicas do seu condomínio."
+      },
+      {
+        "question": "Posso contratar apenas os projetos ou apenas a construção?",
+        "answer": "Sim. Oferecemos soluções modulares: você pode contratar o pacote completo (Projeto + Construção Completa) para máxima tranquilidade, ou contratar separadamente os projetos de engenharia e arquitetura."
+      },
+      {
+        "question": "Vocês realizam construção com financiamento bancário (Caixa / SBPE)?",
+        "answer": "Sim! Elaboramos todo o caderno técnico de engenharia (planilha PCI / PFUI, cronogramas e projetos executivos) necessário para financiamento de aquisição de terreno e construção ou apenas construção em terreno próprio."
+      },
+      {
+        "question": "Qual a região de atendimento da Construtora Transformar?",
+        "answer": "Atuamos fortemente em Maricá (Itaipuaçu, Inoã, Centro, Ponta Negra, São José do Imbassaí, condomínios fechados) e em toda a Região Oceânica adjacente."
+      }
+    ]
+  },
   "about": {
     "tagline": "Sobre a Transformar",
     "title": "Engenharia com Propósito e Rigor Técnico em Cada Detalhe",

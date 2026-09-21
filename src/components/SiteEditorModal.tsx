@@ -24,6 +24,9 @@ import {
   Award, 
   Building2, 
   PhoneCall,
+  MessageSquareQuote,
+  HelpCircle,
+  Star,
   Plus,
   Trash2,
   ExternalLink,
@@ -80,6 +83,8 @@ export const SiteEditorModal: React.FC = () => {
     { key: 'etapas-obra', label: 'Do Terreno à Entrega', icon: <CalendarClock className="w-4 h-4" /> },
     { key: 'servicos', label: 'Serviços', icon: <Wrench className="w-4 h-4" /> },
     { key: 'diferenciais', label: 'Diferenciais', icon: <Award className="w-4 h-4" /> },
+    { key: 'depoimentos', label: 'Experiência do Cliente', icon: <MessageSquareQuote className="w-4 h-4" />, badge: `${draftContent.testimonials?.items?.length ?? 3}` },
+    { key: 'faq', label: 'Perguntas Frequentes', icon: <HelpCircle className="w-4 h-4" />, badge: `${draftContent.faq?.items?.length ?? 4}` },
     { key: 'sobre', label: 'A Transformar', icon: <Building2 className="w-4 h-4" /> },
     { key: 'contato', label: 'Contato & Mapa', icon: <PhoneCall className="w-4 h-4" /> }
   ];
@@ -92,6 +97,8 @@ export const SiteEditorModal: React.FC = () => {
       case 'etapas-obra': return 'timeline';
       case 'servicos': return 'services';
       case 'diferenciais': return 'differentials';
+      case 'depoimentos': return 'testimonials';
+      case 'faq': return 'faq';
       case 'sobre': return 'about';
       case 'contato': return 'contact';
       default: return 'hero';
@@ -1539,6 +1546,465 @@ export const SiteEditorModal: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* =========================================================================
+              TAB: EXPERIÊNCIA DO CLIENTE (DEPOIMENTOS)
+             ========================================================================= */}
+          {activeEditorTab === 'depoimentos' && (() => {
+            const testimonialsData = draftContent.testimonials || {
+              tagline: 'Experiência do Cliente',
+              title: 'Quem constrói com a Transformar, recomenda.',
+              subtitle: 'A satisfação de ver o sonho da casa própria realizado com segurança técnica, prazo e tranquilidade.',
+              noticeText: 'Depoimentos e relatos de clientes de obras e projetos Construtora Transformar',
+              items: []
+            };
+
+            return (
+              <div className="space-y-6 max-w-3xl mx-auto animate-fadeIn">
+                {/* Header Information */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                  <h4 className="font-display font-bold text-base text-[#0C243D] flex items-center gap-2">
+                    <MessageSquareQuote className="w-4 h-4 text-amber-500" />
+                    Cabeçalho da Seção de Experiência do Cliente
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Etiqueta Superior
+                      </label>
+                      <input
+                        type="text"
+                        value={testimonialsData.tagline}
+                        onChange={(e) => setDraftContent({
+                          ...draftContent,
+                          testimonials: { ...testimonialsData, tagline: e.target.value }
+                        })}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                        placeholder="Experiência do Cliente"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Título Principal
+                      </label>
+                      <input
+                        type="text"
+                        value={testimonialsData.title}
+                        onChange={(e) => setDraftContent({
+                          ...draftContent,
+                          testimonials: { ...testimonialsData, title: e.target.value }
+                        })}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-semibold"
+                        placeholder="Quem constrói com a Transformar, recomenda."
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      Subtítulo / Descrição
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={testimonialsData.subtitle}
+                      onChange={(e) => setDraftContent({
+                        ...draftContent,
+                        testimonials: { ...testimonialsData, subtitle: e.target.value }
+                      })}
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                      placeholder="A satisfação de ver o sonho da casa própria realizado com segurança..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                      Nota de Rodapé / Aviso Informativo
+                    </label>
+                    <input
+                      type="text"
+                      value={testimonialsData.noticeText}
+                      onChange={(e) => setDraftContent({
+                        ...draftContent,
+                        testimonials: { ...testimonialsData, noticeText: e.target.value }
+                      })}
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                      placeholder="Depoimentos e relatos de clientes de obras e projetos Construtora Transformar"
+                    />
+                  </div>
+                </div>
+
+                {/* Testimonials List */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-display font-bold text-base text-[#0C243D]">
+                        Relatos e Depoimentos ({testimonialsData.items.length})
+                      </h4>
+                      <p className="text-xs text-slate-500">
+                        Adicione ou edite depoimentos de clientes que realizaram projetos ou obras com a Construtora Transformar.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newItem = {
+                          id: `depoimento-${Date.now()}`,
+                          clientName: 'Novo Cliente',
+                          neighborhood: 'Maricá – RJ',
+                          rating: 5,
+                          projectType: 'Projeto + Construção Completa',
+                          quote: 'Excelente experiência com a equipe técnica da Construtora Transformar.',
+                          date: 'Mês/Ano'
+                        };
+                        setDraftContent({
+                          ...draftContent,
+                          testimonials: {
+                            ...testimonialsData,
+                            items: [...testimonialsData.items, newItem]
+                          }
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Novo Depoimento</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 pt-2">
+                    {testimonialsData.items.map((item, idx) => (
+                      <div
+                        key={item.id || idx}
+                        className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3 relative group hover:border-amber-400 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Depoimento #{idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = testimonialsData.items.filter((_, i) => i !== idx);
+                              setDraftContent({
+                                ...draftContent,
+                                testimonials: { ...testimonialsData, items: updated }
+                              });
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            title="Remover depoimento"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                              Nome do Cliente ou Casal
+                            </label>
+                            <input
+                              type="text"
+                              value={item.clientName}
+                              placeholder="Ex: Carlos e Fernanda S."
+                              onChange={(e) => {
+                                const updated = [...testimonialsData.items];
+                                updated[idx] = { ...item, clientName: e.target.value };
+                                setDraftContent({
+                                  ...draftContent,
+                                  testimonials: { ...testimonialsData, items: updated }
+                                });
+                              }}
+                              className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white font-medium"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                              Bairro / Localidade em Maricá
+                            </label>
+                            <input
+                              type="text"
+                              value={item.neighborhood}
+                              placeholder="Ex: Itaipuaçu (Maricá – RJ)"
+                              onChange={(e) => {
+                                const updated = [...testimonialsData.items];
+                                updated[idx] = { ...item, neighborhood: e.target.value };
+                                setDraftContent({
+                                  ...draftContent,
+                                  testimonials: { ...testimonialsData, items: updated }
+                                });
+                              }}
+                              className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                              Tipo de Projeto / Serviço
+                            </label>
+                            <input
+                              type="text"
+                              value={item.projectType}
+                              placeholder="Ex: Projeto + Construção Completa"
+                              onChange={(e) => {
+                                const updated = [...testimonialsData.items];
+                                updated[idx] = { ...item, projectType: e.target.value };
+                                setDraftContent({
+                                  ...draftContent,
+                                  testimonials: { ...testimonialsData, items: updated }
+                                });
+                              }}
+                              className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                                Estrelas (1 a 5)
+                              </label>
+                              <select
+                                value={item.rating || 5}
+                                onChange={(e) => {
+                                  const updated = [...testimonialsData.items];
+                                  updated[idx] = { ...item, rating: Number(e.target.value) };
+                                  setDraftContent({
+                                    ...draftContent,
+                                    testimonials: { ...testimonialsData, items: updated }
+                                  });
+                                }}
+                                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs bg-white font-semibold text-amber-600"
+                              >
+                                <option value={5}>⭐⭐⭐⭐⭐ (5)</option>
+                                <option value={4}>⭐⭐⭐⭐ (4)</option>
+                                <option value={3}>⭐⭐⭐ (3)</option>
+                                <option value={2}>⭐⭐ (2)</option>
+                                <option value={1}>⭐ (1)</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                                Data / Mês
+                              </label>
+                              <input
+                                type="text"
+                                value={item.date}
+                                placeholder="Ex: Fevereiro 2026"
+                                onChange={(e) => {
+                                  const updated = [...testimonialsData.items];
+                                  updated[idx] = { ...item, date: e.target.value };
+                                  setDraftContent({
+                                    ...draftContent,
+                                    testimonials: { ...testimonialsData, items: updated }
+                                  });
+                                }}
+                                className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs bg-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Depoimento Completo do Cliente
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={item.quote}
+                            placeholder="Descreva o relato e avaliação do cliente..."
+                            onChange={(e) => {
+                              const updated = [...testimonialsData.items];
+                              updated[idx] = { ...item, quote: e.target.value };
+                              setDraftContent({
+                                ...draftContent,
+                                testimonials: { ...testimonialsData, items: updated }
+                              });
+                            }}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white text-slate-700 italic"
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    {testimonialsData.items.length === 0 && (
+                      <div className="text-center py-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                        Nenhum depoimento cadastrado. Clique no botão acima para adicionar.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* =========================================================================
+              TAB: PERGUNTAS FREQUENTES (FAQ)
+             ========================================================================= */}
+          {activeEditorTab === 'faq' && (() => {
+            const faqData = draftContent.faq || {
+              tagline: 'Tire suas Dúvidas',
+              title: 'Perguntas Frequentes sobre Construção em Maricá',
+              items: []
+            };
+
+            return (
+              <div className="space-y-6 max-w-3xl mx-auto animate-fadeIn">
+                {/* Header Information */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                  <h4 className="font-display font-bold text-base text-[#0C243D] flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-amber-500" />
+                    Cabeçalho da Seção de Dúvidas Frequentes
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Etiqueta Superior
+                      </label>
+                      <input
+                        type="text"
+                        value={faqData.tagline}
+                        onChange={(e) => setDraftContent({
+                          ...draftContent,
+                          faq: { ...faqData, tagline: e.target.value }
+                        })}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                        placeholder="Tire suas Dúvidas"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                        Título Principal da Seção
+                      </label>
+                      <input
+                        type="text"
+                        value={faqData.title}
+                        onChange={(e) => setDraftContent({
+                          ...draftContent,
+                          faq: { ...faqData, title: e.target.value }
+                        })}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-semibold"
+                        placeholder="Perguntas Frequentes sobre Construção em Maricá"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* FAQ Questions List */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-display font-bold text-base text-[#0C243D]">
+                        Perguntas & Respostas ({faqData.items.length})
+                      </h4>
+                      <p className="text-xs text-slate-500">
+                        Responda às principais dúvidas sobre aprovação em prefeitura, financiamento bancário, prazos e métodos construtivos.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newFaq = {
+                          question: 'Nova pergunta sobre obras ou projetos?',
+                          answer: 'Resposta explicativa com todas as orientações aos clientes.'
+                        };
+                        setDraftContent({
+                          ...draftContent,
+                          faq: {
+                            ...faqData,
+                            items: [...faqData.items, newFaq]
+                          }
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Nova Pergunta</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 pt-2">
+                    {faqData.items.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3 relative group hover:border-amber-400 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            Pergunta #{idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = faqData.items.filter((_, i) => i !== idx);
+                              setDraftContent({
+                                ...draftContent,
+                                faq: { ...faqData, items: updated }
+                              });
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            title="Remover pergunta"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Pergunta
+                          </label>
+                          <input
+                            type="text"
+                            value={item.question}
+                            placeholder="Ex: Vocês cuidam da aprovação do projeto na Prefeitura de Maricá?"
+                            onChange={(e) => {
+                              const updated = [...faqData.items];
+                              updated[idx] = { ...item, question: e.target.value };
+                              setDraftContent({
+                                ...draftContent,
+                                faq: { ...faqData, items: updated }
+                              });
+                            }}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white font-semibold text-slate-800"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                            Resposta Detalhada
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={item.answer}
+                            placeholder="Descreva a resposta completa para o cliente..."
+                            onChange={(e) => {
+                              const updated = [...faqData.items];
+                              updated[idx] = { ...item, answer: e.target.value };
+                              setDraftContent({
+                                ...draftContent,
+                                faq: { ...faqData, items: updated }
+                              });
+                            }}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white text-slate-700 leading-relaxed"
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    {faqData.items.length === 0 && (
+                      <div className="text-center py-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                        Nenhuma pergunta frequente cadastrada. Clique no botão acima para adicionar.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* =========================================================================
               TAB: A TRANSFORMAR (SOBRE NÓS)

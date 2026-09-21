@@ -417,6 +417,8 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 services: { ...prev.services, ...(json.data.siteContent.services || {}) },
                 portfolio: { ...prev.portfolio, ...(json.data.siteContent.portfolio || {}) },
                 differentials: { ...prev.differentials, ...(json.data.siteContent.differentials || {}) },
+                testimonials: { ...prev.testimonials, ...(json.data.siteContent.testimonials || {}) },
+                faq: { ...prev.faq, ...(json.data.siteContent.faq || {}) },
                 about: { ...prev.about, ...(json.data.siteContent.about || {}) },
                 contact: { ...prev.contact, ...(json.data.siteContent.contact || {}) },
               };

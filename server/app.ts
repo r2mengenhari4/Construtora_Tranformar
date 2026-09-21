@@ -167,6 +167,8 @@ app.get("/api/site-data", async (_req, res) => {
           services: { ...DEFAULT_SITE_CONTENT.services, ...(supabaseData.siteContent.services || {}) },
           portfolio: { ...DEFAULT_SITE_CONTENT.portfolio, ...(supabaseData.siteContent.portfolio || {}) },
           differentials: { ...DEFAULT_SITE_CONTENT.differentials, ...(supabaseData.siteContent.differentials || {}) },
+          testimonials: { ...DEFAULT_SITE_CONTENT.testimonials, ...(supabaseData.siteContent.testimonials || {}) },
+          faq: { ...DEFAULT_SITE_CONTENT.faq, ...(supabaseData.siteContent.faq || {}) },
           about: { ...DEFAULT_SITE_CONTENT.about, ...(supabaseData.siteContent.about || {}) },
           contact: { ...DEFAULT_SITE_CONTENT.contact, ...(supabaseData.siteContent.contact || {}) },
         };
@@ -284,6 +286,8 @@ app.post("/api/save-site-content", async (req, res) => {
       services: { ...DEFAULT_SITE_CONTENT.services, ...(existing.services || {}), ...(siteContent.services || {}) },
       portfolio: { ...DEFAULT_SITE_CONTENT.portfolio, ...(existing.portfolio || {}), ...(siteContent.portfolio || {}) },
       differentials: { ...DEFAULT_SITE_CONTENT.differentials, ...(existing.differentials || {}), ...(siteContent.differentials || {}) },
+      testimonials: { ...DEFAULT_SITE_CONTENT.testimonials, ...(existing.testimonials || {}), ...(siteContent.testimonials || {}) },
+      faq: { ...DEFAULT_SITE_CONTENT.faq, ...(existing.faq || {}), ...(siteContent.faq || {}) },
       about: { ...DEFAULT_SITE_CONTENT.about, ...(existing.about || {}), ...(siteContent.about || {}) },
       contact: { ...DEFAULT_SITE_CONTENT.contact, ...(existing.contact || {}), ...(siteContent.contact || {}) },
     };

@@ -1,8 +1,18 @@
 import React from 'react';
-import { TESTIMONIALS } from '../data/companyData';
+import { useMember } from '../context/MemberContext';
+import { SectionEditButton } from './SectionEditButton';
 import { Star, Quote, MapPin, Info } from 'lucide-react';
 
 export const TestimonialsSection: React.FC = () => {
+  const { siteContent } = useMember();
+  const testimonials = siteContent?.testimonials || {
+    tagline: 'Experiência do Cliente',
+    title: 'Quem constrói com a Transformar, recomenda.',
+    subtitle: 'A satisfação de ver o sonho da casa própria realizado com segurança técnica, prazo e tranquilidade.',
+    noticeText: 'Depoimentos e relatos de clientes de obras e projetos Construtora Transformar',
+    items: []
+  };
+
   return (
     <section id="depoimentos" className="py-28 lg:py-36 bg-[#FAFBFD] relative overflow-hidden">
       {/* Subtle ambient lighting */}
@@ -11,26 +21,31 @@ export const TestimonialsSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-10">
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center mb-20">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-semibold tracking-wider uppercase mb-4">
-            <span>Experiência do Cliente</span>
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-700 text-xs font-semibold tracking-wider uppercase">
+              <span>{testimonials.tagline || 'Experiência do Cliente'}</span>
+            </div>
+            <SectionEditButton tab="depoimentos" label="Editar Experiência do Cliente" />
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-slate-900 tracking-tight mb-4">
-            Quem constrói com a Transformar, recomenda.
+            {testimonials.title || 'Quem constrói com a Transformar, recomenda.'}
           </h2>
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
-            A satisfação de ver o sonho da casa própria realizado com segurança técnica, prazo e tranquilidade.
+            {testimonials.subtitle || 'A satisfação de ver o sonho da casa própria realizado com segurança técnica, prazo e tranquilidade.'}
           </p>
 
           {/* Discreet Notice */}
-          <div className="mt-5 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200/80 text-slate-500 text-[11px]">
-            <Info className="w-3.5 h-3.5 text-slate-400" />
-            <span>Depoimentos e relatos de clientes de obras e projetos Construtora Transformar</span>
-          </div>
+          {testimonials.noticeText && (
+            <div className="mt-5 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-100 border border-slate-200/80 text-slate-500 text-[11px]">
+              <Info className="w-3.5 h-3.5 text-slate-400" />
+              <span>{testimonials.noticeText}</span>
+            </div>
+          )}
         </div>
 
         {/* Testimonials Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {TESTIMONIALS.map((testimonial) => (
+          {(testimonials.items || []).map((testimonial) => (
             <div
               key={testimonial.id}
               id={`testimonial-card-${testimonial.id}`}
@@ -40,7 +55,7 @@ export const TestimonialsSection: React.FC = () => {
                 {/* Top: Stars & Quote Icon */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-1 text-amber-400">
-                    {[...Array(testimonial.rating)].map((_, i) => (
+                    {[...Array(Math.min(5, Math.max(1, testimonial.rating || 5)))].map((_, i) => (
                       <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
@@ -48,11 +63,13 @@ export const TestimonialsSection: React.FC = () => {
                 </div>
 
                 {/* Project Badge */}
-                <div className="mb-4">
-                  <span className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
-                    {testimonial.projectType}
-                  </span>
-                </div>
+                {testimonial.projectType && (
+                  <div className="mb-4">
+                    <span className="text-[11px] font-semibold text-amber-800 uppercase tracking-wider bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                      {testimonial.projectType}
+                    </span>
+                  </div>
+                )}
 
                 {/* Quote Text */}
                 <p className="text-sm sm:text-base text-slate-700 italic leading-relaxed mb-6 font-light">
@@ -66,14 +83,18 @@ export const TestimonialsSection: React.FC = () => {
                   <h4 className="text-sm font-bold text-slate-900">
                     {testimonial.clientName}
                   </h4>
-                  <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
-                    <MapPin className="w-3.5 h-3.5 text-amber-600" />
-                    <span>{testimonial.neighborhood}</span>
-                  </p>
+                  {testimonial.neighborhood && (
+                    <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+                      <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                      <span>{testimonial.neighborhood}</span>
+                    </p>
+                  )}
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium">
-                  {testimonial.date}
-                </span>
+                {testimonial.date && (
+                  <span className="text-[11px] text-slate-400 font-medium">
+                    {testimonial.date}
+                  </span>
+                )}
               </div>
             </div>
           ))}

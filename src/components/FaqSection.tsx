@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { FAQS } from '../data/companyData';
+import { useMember } from '../context/MemberContext';
+import { SectionEditButton } from './SectionEditButton';
 import { ChevronDown, HelpCircle } from 'lucide-react';
 
 export const FaqSection: React.FC = () => {
+  const { siteContent } = useMember();
+  const faqData = siteContent?.faq || {
+    tagline: 'Tire suas Dúvidas',
+    title: 'Perguntas Frequentes sobre Construção em Maricá',
+    items: []
+  };
+
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const toggleFaq = (index: number) => {
@@ -13,17 +21,20 @@ export const FaqSection: React.FC = () => {
     <section id="faq" className="py-20 bg-white border-t border-slate-200">
       <div className="max-w-4xl mx-auto px-4 sm:px-8">
         <div className="text-center mb-12">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-amber-600 mb-2">
-            <HelpCircle className="w-4 h-4" />
-            <span>Tire suas Dúvidas</span>
-          </span>
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-2">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-amber-600">
+              <HelpCircle className="w-4 h-4" />
+              <span>{faqData.tagline || 'Tire suas Dúvidas'}</span>
+            </span>
+            <SectionEditButton tab="faq" label="Editar Perguntas Frequentes" />
+          </div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold text-slate-900">
-            Perguntas Frequentes sobre Construção em Maricá
+            {faqData.title || 'Perguntas Frequentes sobre Construção em Maricá'}
           </h2>
         </div>
 
         <div className="space-y-3">
-          {FAQS.map((faq, idx) => {
+          {(faqData.items || []).map((faq, idx) => {
             const isOpen = openIndex === idx;
             return (
               <div
@@ -45,7 +56,7 @@ export const FaqSection: React.FC = () => {
                 </button>
 
                 {isOpen && (
-                  <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/60 pt-3">
+                  <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/60 pt-3 whitespace-pre-line">
                     {faq.answer}
                   </div>
                 )}
