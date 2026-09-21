@@ -184,10 +184,10 @@ export async function initializeSupabaseTablesAndSeed(
   };
 
   try {
-    // 1. Check if site_settings table exists by selecting 1 row
+    // 1. Check if site_settings table exists and fetch current rows
     const { data: existingData, error: tableErr } = await client
       .from("site_settings")
-      .select("id")
+      .select("id, data")
       .limit(10);
 
     if (tableErr) {
@@ -202,11 +202,23 @@ export async function initializeSupabaseTablesAndSeed(
     results.database = true;
     results.siteSettingsTable = true;
 
-    // Check existing keys
-    const existingIds = new Set((existingData || []).map((row: any) => row.id));
+    // Check existing keys and their data health
+    const existingMap = new Map((existingData || []).map((row: any) => [row.id, row.data]));
 
-    // Seed initial records if not present
-    if (!existingIds.has("company_config") && defaultConfig) {
+    const isCompanyConfigEmpty = !existingMap.has("company_config") || 
+      !existingMap.get("company_config") || 
+      Object.keys(existingMap.get("company_config")).length === 0;
+
+    const isSiteContentEmpty = !existingMap.has("site_content") || 
+      !existingMap.get("site_content") || 
+      !existingMap.get("site_content").hero;
+
+    const isProjectsEmpty = !existingMap.has("projects") || 
+      !Array.isArray(existingMap.get("projects")) || 
+      existingMap.get("projects").length === 0;
+
+    // Seed or repair initial records if not present or empty
+    if (isCompanyConfigEmpty && defaultConfig) {
       await client.from("site_settings").upsert({
         id: "company_config",
         data: defaultConfig,
@@ -215,7 +227,7 @@ export async function initializeSupabaseTablesAndSeed(
       results.seededRows.push("company_config");
     }
 
-    if (!existingIds.has("site_content") && defaultContent) {
+    if (isSiteContentEmpty && defaultContent) {
       await client.from("site_settings").upsert({
         id: "site_content",
         data: defaultContent,
@@ -224,7 +236,7 @@ export async function initializeSupabaseTablesAndSeed(
       results.seededRows.push("site_content");
     }
 
-    if (!existingIds.has("projects") && defaultProjects) {
+    if (isProjectsEmpty && defaultProjects) {
       await client.from("site_settings").upsert({
         id: "projects",
         data: defaultProjects,

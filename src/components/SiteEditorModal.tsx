@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMember } from '../context/MemberContext';
 import { Project } from '../types';
 import { SectionTabKey, SiteContent } from '../types/siteContent';
@@ -57,17 +57,19 @@ export const SiteEditorModal: React.FC = () => {
   const [mediaNotice, setMediaNotice] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
   const [isProcessingMedia, setIsProcessingMedia] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const wasOpenRef = useRef(false);
 
-  // Sync draft with siteContent whenever modal opens or tab changes
+  // Sync draft with siteContent only when modal is first opened
   useEffect(() => {
-    if (isSiteEditorOpen) {
+    if (isSiteEditorOpen && !wasOpenRef.current) {
       setDraftContent(siteContent);
       setSavedSuccess(false);
       setResetConfirm(false);
       setMediaNotice(null);
       setProjectToDelete(null);
     }
-  }, [isSiteEditorOpen, siteContent]);
+    wasOpenRef.current = isSiteEditorOpen;
+  }, [isSiteEditorOpen]);
 
   if (!isSiteEditorOpen) return null;
 

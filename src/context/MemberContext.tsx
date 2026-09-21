@@ -8,7 +8,9 @@ import {
   fetchSiteDataDirectFromSupabase,
   saveSiteContentDirectToSupabase,
   saveCompanyConfigDirectToSupabase,
-  saveProjectsDirectToSupabase
+  saveProjectsDirectToSupabase,
+  getBrowserSupabase,
+  saveBrowserSupabaseConfig
 } from '../utils/supabaseClient';
 
 interface MemberContextType {
@@ -202,6 +204,16 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Asynchronously synchronize site content with Supabase PostgreSQL & source code file
   const syncSiteContentToSourceCode = async (newContent: SiteContent) => {
     setIsSyncingSourceCode(true);
+
+    // Notify other tabs in the same browser immediately
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('transformar_site_sync');
+        bc.postMessage({ type: 'SYNC_UPDATE', section: 'site_content' });
+        bc.close();
+      }
+    } catch {}
+
     let directOk = false;
     try {
       // Direct browser-to-Supabase write (instant, cross-browser)
@@ -223,7 +235,10 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       } catch {}
 
       if (data && data.success) {
-        showSyncNotification(data.message || 'Conteúdo salvo no Supabase PostgreSQL e gravado no código-fonte!');
+        if (data.data) {
+          setSiteContent((prev) => ({ ...prev, ...data.data }));
+        }
+        showSyncNotification(data.message || 'Conteúdo salvo no Supabase PostgreSQL e sincronizado entre navegadores!');
       } else if (directOk) {
         showSyncNotification('Conteúdo salvo diretamente no Supabase PostgreSQL (cross-browser ativo)!');
       } else {
@@ -245,6 +260,15 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Asynchronously synchronize company config with Supabase PostgreSQL & source code file
   const syncCompanyConfigToSourceCode = async (newConfig: typeof COMPANY_CONFIG) => {
     setIsSyncingSourceCode(true);
+
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('transformar_site_sync');
+        bc.postMessage({ type: 'SYNC_UPDATE', section: 'company_config' });
+        bc.close();
+      }
+    } catch {}
+
     let directOk = false;
     try {
       // Direct browser-to-Supabase write
@@ -266,7 +290,7 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       } catch {}
 
       if (data && data.success) {
-        showSyncNotification(data.message || 'Configuração salva no Supabase PostgreSQL e no código-fonte!');
+        showSyncNotification(data.message || 'Configuração salva no Supabase PostgreSQL e sincronizada!');
       } else if (directOk) {
         showSyncNotification('Configuração salva diretamente no Supabase PostgreSQL!');
       } else {
@@ -287,6 +311,15 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Asynchronously synchronize projects with Supabase PostgreSQL & source code file
   const syncProjectsToSourceCode = async (newProjects: Project[]) => {
     setIsSyncingSourceCode(true);
+
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('transformar_site_sync');
+        bc.postMessage({ type: 'SYNC_UPDATE', section: 'projects' });
+        bc.close();
+      }
+    } catch {}
+
     let directOk = false;
     try {
       // Direct browser-to-Supabase write
@@ -308,7 +341,7 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       } catch {}
 
       if (data && data.success) {
-        showSyncNotification(data.message || 'Projetos salvos no Supabase PostgreSQL e no código-fonte!');
+        showSyncNotification(data.message || 'Projetos salvos no Supabase PostgreSQL e sincronizados!');
       } else if (directOk) {
         showSyncNotification('Projetos salvos diretamente no Supabase PostgreSQL!');
       } else {
@@ -369,13 +402,13 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       try {
         const res = await fetch('/api/site-data');
         const json = await res.json();
-        if (json.success) {
+        if (json.success && json.data) {
           if (json.supabase) {
             setSupabaseStatus(json.supabase);
           }
-          if (json.data) {
-            if (json.data.siteContent) {
-              setSiteContent((prev) => ({
+          if (json.data.siteContent) {
+            setSiteContent((prev) => {
+              const updated = {
                 ...prev,
                 ...json.data.siteContent,
                 hero: { ...prev.hero, ...(json.data.siteContent.hero || {}) },
@@ -386,20 +419,30 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                 differentials: { ...prev.differentials, ...(json.data.siteContent.differentials || {}) },
                 about: { ...prev.about, ...(json.data.siteContent.about || {}) },
                 contact: { ...prev.contact, ...(json.data.siteContent.contact || {}) },
-              }));
-            }
-            if (json.data.companyConfig) {
-              setCompanyConfig((prev) => ({
+              };
+              try {
+                localStorage.setItem(STORAGE_SITE_CONTENT_KEY, JSON.stringify(updated));
+              } catch {}
+              return updated;
+            });
+          }
+          if (json.data.companyConfig) {
+            setCompanyConfig((prev) => {
+              const updated = {
                 ...prev,
                 ...json.data.companyConfig,
-              }));
-            }
-            if (Array.isArray(json.data.projects) && json.data.projects.length > 0) {
-              setProjects(json.data.projects);
-            }
-            console.log(
-              `[CONSTRUTORA] Dados carregados via ${json.source === 'supabase' ? 'Supabase PostgreSQL' : 'código-fonte'}.`
-            );
+              };
+              try {
+                localStorage.setItem(STORAGE_CONFIG_KEY, JSON.stringify(updated));
+              } catch {}
+              return updated;
+            });
+          }
+          if (Array.isArray(json.data.projects) && json.data.projects.length > 0) {
+            setProjects(json.data.projects);
+            try {
+              localStorage.setItem(STORAGE_PROJECTS_KEY, JSON.stringify(json.data.projects));
+            } catch {}
           }
         }
       } catch (err) {
@@ -424,17 +467,16 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
     };
 
+    // Load initial data
     loadRemoteSiteData();
     refreshSupabaseStatus();
 
-    // Cross-browser persistence:
-    // Polls Supabase / API periodically every 30s so all browsers/visitors receive the latest data
+    // Fast polling every 6s for robust cross-browser updates
     const interval = setInterval(() => {
       loadRemoteSiteData();
-      refreshSupabaseStatus();
-    }, 30000);
+    }, 6000);
 
-    // Also re-sync when tab becomes active / focused
+    // Re-sync when tab becomes active / focused in any browser
     const handleVisibilityOrFocus = () => {
       if (document.visibilityState === 'visible') {
         loadRemoteSiteData();
@@ -445,10 +487,63 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     document.addEventListener('visibilitychange', handleVisibilityOrFocus);
     window.addEventListener('focus', handleVisibilityOrFocus);
 
+    // Storage event listener for tabs of the same browser
+    const handleStorageChange = (e: StorageEvent) => {
+      if (
+        e.key === STORAGE_SITE_CONTENT_KEY ||
+        e.key === STORAGE_CONFIG_KEY ||
+        e.key === STORAGE_PROJECTS_KEY
+      ) {
+        loadRemoteSiteData();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    // Inter-tab BroadcastChannel listener
+    let broadcastChannel: BroadcastChannel | null = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        broadcastChannel = new BroadcastChannel('transformar_site_sync');
+        broadcastChannel.onmessage = () => {
+          loadRemoteSiteData();
+        };
+      }
+    } catch {}
+
+    // Supabase Realtime channel subscription (instant cross-browser sync via PostgreSQL events)
+    let realtimeChannel: any = null;
+    try {
+      const client = getBrowserSupabase();
+      if (client) {
+        realtimeChannel = client
+          .channel('realtime_site_settings_broadcast')
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'site_settings' },
+            () => {
+              loadRemoteSiteData();
+            }
+          )
+          .subscribe();
+      }
+    } catch (e) {
+      console.warn('Realtime channel setup skipped:', e);
+    }
+
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
       window.removeEventListener('focus', handleVisibilityOrFocus);
+      window.removeEventListener('storage', handleStorageChange);
+      if (broadcastChannel) {
+        try { broadcastChannel.close(); } catch {}
+      }
+      if (realtimeChannel) {
+        try {
+          const client = getBrowserSupabase();
+          if (client) client.removeChannel(realtimeChannel);
+        } catch {}
+      }
     };
   }, []);
 

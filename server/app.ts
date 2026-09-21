@@ -1,6 +1,8 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import { DEFAULT_SITE_CONTENT } from "../src/data/defaultSiteContent";
+import { COMPANY_CONFIG, PORTFOLIO_PROJECTS } from "../src/data/companyData";
 import {
   getSupabaseDiagnostic,
   getSiteDataFromSupabase,
@@ -126,7 +128,10 @@ app.post(["/api/supabase-config", "/supabase-config"], async (req, res) => {
 app.post(["/api/supabase-init-tables", "/supabase-init-tables"], async (req, res) => {
   try {
     const { siteContent, companyConfig, projects } = req.body || {};
-    const result = await initializeSupabaseTablesAndSeed(siteContent, companyConfig, projects);
+    const finalContent = siteContent || DEFAULT_SITE_CONTENT;
+    const finalConfig = companyConfig || COMPANY_CONFIG;
+    const finalProjects = (Array.isArray(projects) && projects.length > 0) ? projects : PORTFOLIO_PROJECTS;
+    const result = await initializeSupabaseTablesAndSeed(finalContent, finalConfig, finalProjects);
     res.json(result);
   } catch (err: any) {
     console.error("[SERVER] Erro ao inicializar tabelas no Supabase:", err);
@@ -140,35 +145,52 @@ app.post(["/api/supabase-init-tables", "/supabase-init-tables"], async (req, res
 
 /**
  * GET /api/site-data
- * Fetches latest data for all visitors. Priority: Supabase PostgreSQL -> local code files
+ * Fetches latest data for all visitors. Merges Supabase data with baseline defaults so all browsers receive complete, updated content.
  */
 app.get("/api/site-data", async (_req, res) => {
   try {
     const diagnostic = await getSupabaseDiagnostic();
     const supabaseData = await getSiteDataFromSupabase();
 
-    if (
-      supabaseData &&
-      (supabaseData.siteContent || supabaseData.companyConfig || supabaseData.projects)
-    ) {
-      res.json({
-        success: true,
-        source: "supabase",
-        supabase: diagnostic,
-        data: {
-          siteContent: supabaseData.siteContent,
-          companyConfig: supabaseData.companyConfig,
-          projects: supabaseData.projects,
-        },
-      });
-      return;
+    let mergedContent = DEFAULT_SITE_CONTENT;
+    let mergedConfig = COMPANY_CONFIG;
+    let mergedProjects = PORTFOLIO_PROJECTS;
+
+    if (supabaseData) {
+      if (supabaseData.siteContent && typeof supabaseData.siteContent === "object") {
+        mergedContent = {
+          ...DEFAULT_SITE_CONTENT,
+          ...supabaseData.siteContent,
+          hero: { ...DEFAULT_SITE_CONTENT.hero, ...(supabaseData.siteContent.hero || {}) },
+          allInOne: { ...DEFAULT_SITE_CONTENT.allInOne, ...(supabaseData.siteContent.allInOne || {}) },
+          timeline: { ...DEFAULT_SITE_CONTENT.timeline, ...(supabaseData.siteContent.timeline || {}) },
+          services: { ...DEFAULT_SITE_CONTENT.services, ...(supabaseData.siteContent.services || {}) },
+          portfolio: { ...DEFAULT_SITE_CONTENT.portfolio, ...(supabaseData.siteContent.portfolio || {}) },
+          differentials: { ...DEFAULT_SITE_CONTENT.differentials, ...(supabaseData.siteContent.differentials || {}) },
+          about: { ...DEFAULT_SITE_CONTENT.about, ...(supabaseData.siteContent.about || {}) },
+          contact: { ...DEFAULT_SITE_CONTENT.contact, ...(supabaseData.siteContent.contact || {}) },
+        };
+      }
+      if (supabaseData.companyConfig && typeof supabaseData.companyConfig === "object" && Object.keys(supabaseData.companyConfig).length > 0) {
+        mergedConfig = {
+          ...COMPANY_CONFIG,
+          ...supabaseData.companyConfig,
+        };
+      }
+      if (Array.isArray(supabaseData.projects) && supabaseData.projects.length > 0) {
+        mergedProjects = supabaseData.projects;
+      }
     }
 
     res.json({
       success: true,
-      source: "code",
+      source: supabaseData?.siteContent ? "supabase" : "code",
       supabase: diagnostic,
-      data: null,
+      data: {
+        siteContent: mergedContent,
+        companyConfig: mergedConfig,
+        projects: mergedProjects,
+      },
     });
   } catch (err: any) {
     console.error("[SERVER] Erro ao obter dados do site:", err);
@@ -238,24 +260,42 @@ app.post("/api/upload-media", async (req, res) => {
 
 /**
  * POST /api/save-site-content
- * Saves into Supabase PostgreSQL AND optionally updates src/data/defaultSiteContent.ts in writable environments
+ * Saves into Supabase PostgreSQL AND updates defaultSiteContent.ts with safely merged content
  */
 app.post("/api/save-site-content", async (req, res) => {
   try {
     const { siteContent } = req.body;
-    if (!siteContent) {
+    if (!siteContent || typeof siteContent !== "object") {
       res.status(400).json({ success: false, error: "siteContent é obrigatório." });
       return;
     }
 
+    // Get current data from Supabase to merge cleanly so no section is ever dropped
+    const currentData = await getSiteDataFromSupabase();
+    const existing = currentData?.siteContent || DEFAULT_SITE_CONTENT;
+
+    const mergedContent = {
+      ...DEFAULT_SITE_CONTENT,
+      ...existing,
+      ...siteContent,
+      hero: { ...DEFAULT_SITE_CONTENT.hero, ...(existing.hero || {}), ...(siteContent.hero || {}) },
+      allInOne: { ...DEFAULT_SITE_CONTENT.allInOne, ...(existing.allInOne || {}), ...(siteContent.allInOne || {}) },
+      timeline: { ...DEFAULT_SITE_CONTENT.timeline, ...(existing.timeline || {}), ...(siteContent.timeline || {}) },
+      services: { ...DEFAULT_SITE_CONTENT.services, ...(existing.services || {}), ...(siteContent.services || {}) },
+      portfolio: { ...DEFAULT_SITE_CONTENT.portfolio, ...(existing.portfolio || {}), ...(siteContent.portfolio || {}) },
+      differentials: { ...DEFAULT_SITE_CONTENT.differentials, ...(existing.differentials || {}), ...(siteContent.differentials || {}) },
+      about: { ...DEFAULT_SITE_CONTENT.about, ...(existing.about || {}), ...(siteContent.about || {}) },
+      contact: { ...DEFAULT_SITE_CONTENT.contact, ...(existing.contact || {}), ...(siteContent.contact || {}) },
+    };
+
     // 1. Save in Supabase PostgreSQL
-    const supabaseOk = await saveSiteContentToSupabase(siteContent);
+    const supabaseOk = await saveSiteContentToSupabase(mergedContent);
 
     // 2. Update local TypeScript source file when running in writable local/dev environment
     const fileContent = `// Arquivo gerado e sincronizado automaticamente via Área de Membros da Construtora Transformar
 import { SiteContent } from '../types/siteContent';
 
-export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(siteContent, null, 2)};
+export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(mergedContent, null, 2)};
 `;
     const localWritten = safeWriteSourceFile(DEFAULT_SITE_CONTENT_PATH, fileContent);
 
@@ -263,6 +303,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = ${JSON.stringify(siteContent, n
       success: true,
       savedToSupabase: supabaseOk,
       localSync: localWritten,
+      data: mergedContent,
       message: supabaseOk
         ? "Conteúdo salvo com sucesso no Supabase PostgreSQL!"
         : "Conteúdo salvo no código-fonte com sucesso (adicione as chaves do Supabase para persistir no banco).",

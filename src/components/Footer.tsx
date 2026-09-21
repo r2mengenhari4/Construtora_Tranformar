@@ -98,17 +98,6 @@ export const Footer: React.FC = () => {
                   </a>
                 </li>
               ))}
-              <li>
-                <button
-                  id="footer-membros-btn"
-                  type="button"
-                  onClick={openLoginModal}
-                  className="text-amber-400 hover:text-amber-300 font-medium transition-colors flex items-center gap-1.5 py-0.5 cursor-pointer text-left"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>{isLoggedIn && currentMember ? `Membros (${currentMember.name})` : 'Acesso Membros'}</span>
-                </button>
-              </li>
             </ul>
           </div>
 
@@ -226,10 +215,18 @@ export const Footer: React.FC = () => {
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <p>© 2026 Construtora Transformar. Todos os direitos reservados.</p>
 
-          <div className="flex items-center gap-6">
-            <span className="text-[11px] text-slate-400">
-              Desenvolvido com excelência arquitetônica e engenharia de precisão.
-            </span>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <button
+              id="footer-membros-bottom-btn"
+              type="button"
+              onClick={openLoginModal}
+              className="text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1.5 cursor-pointer py-1 text-xs"
+              title="Acesso de Membros e Gestão"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+              <span>Área de Membros</span>
+            </button>
+
             <button
               type="button"
               onClick={scrollToTop}
