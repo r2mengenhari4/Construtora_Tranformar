@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { COMPANY_CONFIG } from '../data/companyData';
+import { useMember } from '../context/MemberContext';
+import { buildWhatsAppUrl, formatContactLeadMessage, forwardToWhatsApp } from '../utils/whatsapp';
 import { X, Send, MessageCircle, CheckCircle2, ShieldCheck, MapPin } from 'lucide-react';
 
 interface BudgetModalProps {
@@ -15,6 +17,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
   initialService = 'Projeto + construção',
   initialProject = ''
 }) => {
+  const { companyConfig } = useMember();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
@@ -30,22 +33,23 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
 
   if (!isOpen) return null;
 
+  const targetWhatsappNumber = companyConfig?.WHATSAPP_NUMBER || COMPANY_CONFIG.WHATSAPP_NUMBER;
+  const whatsappMessage = formatContactLeadMessage({
+    name,
+    phone,
+    neighborhood,
+    hasLand,
+    serviceNeeded: service,
+    message: details
+  });
+  const whatsappUrl = buildWhatsAppUrl(targetWhatsappNumber, whatsappMessage);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Encaminha diretamente para a página do WhatsApp com a mensagem pronta
+    forwardToWhatsApp(whatsappUrl);
     setIsSuccess(true);
   };
-
-  const whatsappMessage = `Olá! Solicito atendimento da Construtora Transformar:
-Nome: ${name || 'Cliente'}
-Telefone: ${phone}
-Bairro/Região: ${neighborhood || 'Maricá'}
-Possui Terreno: ${hasLand}
-Serviço de Interesse: ${service}
-Observações: ${details || 'Gostaria de agendar uma reunião inicial.'}`;
-
-  const whatsappUrl = `https://wa.me/${COMPANY_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    whatsappMessage
-  )}`;
 
   return (
     <div 
@@ -66,29 +70,29 @@ Observações: ${details || 'Gostaria de agendar uma reunião inicial.'}`;
 
         {isSuccess ? (
           <div className="text-center py-8">
-            <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-4">
+            <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-4 animate-pulse">
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <h3 className="text-2xl font-display font-bold text-white mb-2">
-              Solicitação Recebida!
+              Encaminhando para o WhatsApp!
             </h3>
             <p className="text-sm text-slate-300 mb-6">
-              A equipe da Transformar analisará seu pedido para Maricá e retornará com orientações técnicas.
+              Sua solicitação foi organizada com base no preenchimento e enviada diretamente para o nosso atendimento no WhatsApp.
             </p>
             <div className="flex flex-col gap-3">
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3.5 px-4 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-500 flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] transition-all cursor-pointer"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>Continuar no WhatsApp</span>
+                <span>Abrir WhatsApp com Mensagem Pronta</span>
               </a>
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full py-3 px-4 rounded-xl text-xs text-slate-400 hover:text-white border border-slate-800"
+                className="w-full py-3 px-4 rounded-xl text-xs text-slate-400 hover:text-white border border-slate-800 cursor-pointer"
               >
                 Fechar
               </button>

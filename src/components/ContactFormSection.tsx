@@ -3,6 +3,7 @@ import { ContactFormData } from '../types';
 import { COMPANY_CONFIG } from '../data/companyData';
 import { useMember } from '../context/MemberContext';
 import { SectionEditButton } from './SectionEditButton';
+import { buildWhatsAppUrl, formatContactLeadMessage, forwardToWhatsApp } from '../utils/whatsapp';
 import { 
   Send, 
   CheckCircle, 
@@ -70,27 +71,22 @@ export const ContactFormSection: React.FC<ContactFormSectionProps> = ({
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const targetWhatsappNumber = contact.whatsappNumber || COMPANY_CONFIG.WHATSAPP_NUMBER;
+  const prefilledWhatsappMessage = formatContactLeadMessage(formData);
+  const directWhatsappUrl = buildWhatsAppUrl(targetWhatsappNumber, prefilledWhatsappMessage);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate reliable submission feedback
+    // Encaminha imediatamente para o WhatsApp com a mensagem pronta preenchida
+    forwardToWhatsApp(directWhatsappUrl);
+
     setTimeout(() => {
       setIsSubmitting(false);
       setSubmitted(true);
-    }, 600);
+    }, 400);
   };
-
-  const whatsappDirectMessage = `Olá, meu nome é ${formData.name || 'Cliente'}.
-Telefone: ${formData.phone}
-Local: ${formData.neighborhood}
-Possui Terreno: ${formData.hasLand}
-Interesse: ${formData.serviceNeeded}
-Mensagem: ${formData.message || 'Gostaria de agendar uma conversa sobre meu projeto em Maricá.'}`;
-
-  const directWhatsappUrl = `https://wa.me/${contact.whatsappNumber || COMPANY_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    whatsappDirectMessage
-  )}`;
 
   return (
     <section id="contato" className="py-28 lg:py-36 bg-[#070E1B] text-white relative overflow-hidden">
@@ -233,16 +229,17 @@ Mensagem: ${formData.message || 'Gostaria de agendar uma conversa sobre meu proj
                   </div>
 
                   <h3 className="text-2xl sm:text-3xl font-display font-bold text-white mb-3">
-                    Solicitação Enviada com Sucesso!
+                    Encaminhando para o WhatsApp!
                   </h3>
 
-                  <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-md mx-auto mb-8">
-                    Obrigado, <strong className="text-amber-400">{formData.name}</strong>. Recebemos seus dados e nossa equipe de engenharia e arquitetura entrará em contato em breve para conversar sobre seu projeto em Maricá.
+                  <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-md mx-auto mb-6">
+                    Olá, <strong className="text-amber-400">{formData.name || 'Cliente'}</strong>! Sua solicitação foi preparada e encaminhada diretamente ao nosso WhatsApp com todas as informações preenchidas.
                   </p>
 
                   <div className="p-4 rounded-2xl bg-[#070E1B] border border-slate-800 mb-8 max-w-md mx-auto text-left text-xs text-slate-300 space-y-1">
                     <p><strong className="text-amber-400">Interesse:</strong> {formData.serviceNeeded}</p>
-                    <p><strong className="text-amber-400">Bairro:</strong> {formData.neighborhood || 'Maricá'}</p>
+                    <p><strong className="text-amber-400">Telefone:</strong> {formData.phone}</p>
+                    {formData.neighborhood && <p><strong className="text-amber-400">Bairro:</strong> {formData.neighborhood}</p>}
                     <p><strong className="text-amber-400">Terreno:</strong> {formData.hasLand}</p>
                   </div>
 
@@ -252,10 +249,10 @@ Mensagem: ${formData.message || 'Gostaria de agendar uma conversa sobre meu proj
                       href={directWhatsappUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-500 transition-all shadow-lg hover:scale-105"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-500 transition-all shadow-lg hover:scale-105 cursor-pointer"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      <span>Agilizar no WhatsApp Agora</span>
+                      <span>Abrir WhatsApp com Mensagem Pronta</span>
                     </a>
 
                     <button
@@ -272,7 +269,7 @@ Mensagem: ${formData.message || 'Gostaria de agendar uma conversa sobre meu proj
                           message: ''
                         });
                       }}
-                      className="px-6 py-3.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500"
+                      className="px-6 py-3.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:text-white border border-slate-700 hover:border-slate-500 cursor-pointer"
                     >
                       Enviar outra solicitação
                     </button>
