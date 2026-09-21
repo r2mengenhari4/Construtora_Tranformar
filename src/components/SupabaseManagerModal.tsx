@@ -20,7 +20,8 @@ import {
 import { 
   getStoredClientSupabaseConfig, 
   saveBrowserSupabaseConfig, 
-  testBrowserSupabaseConnection 
+  testBrowserSupabaseConnection,
+  initializeOrVerifyBrowserTables
 } from '../utils/supabaseClient';
 
 interface SupabaseManagerModalProps {
@@ -76,10 +77,19 @@ export const SupabaseManagerModal: React.FC<SupabaseManagerModalProps> = ({ isOp
 
       // 2. Query server for current config
       fetch('/api/supabase-config')
-        .then((r) => r.json())
-        .then((data) => {
-          if (data && data.success) {
-            if (data.url && !clientConfig.url) setSupabaseUrl(data.url);
+        .then((r) => r.text())
+        .then((raw) => {
+          try {
+            const data = JSON.parse(raw);
+            if (data && data.success) {
+              if (data.url) setSupabaseUrl(data.url);
+              if (data.anonKey) {
+                setAnonKey(data.anonKey);
+                saveBrowserSupabaseConfig(data.url, data.anonKey);
+              }
+            }
+          } catch {
+            // Non-JSON response, ignore
           }
         })
         .catch(() => {});
@@ -209,28 +219,76 @@ export const SupabaseManagerModal: React.FC<SupabaseManagerModalProps> = ({ isOp
     setInitResult(null);
 
     try {
-      const res = await fetch('/api/supabase-init-tables', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          siteContent,
-          companyConfig,
-          projects,
-        }),
-      });
+      let serverData: any = null;
+      let serverAttemptFailed = false;
+      let serverErrorMsg = '';
 
-      const data = await res.json();
+      // 1. Attempt verification via server API (safe parse, lightweight payload)
+      try {
+        const res = await fetch('/api/supabase-init-tables', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ checkOnly: true }),
+        });
+
+        const rawText = await res.text();
+        if (rawText && (rawText.trim().startsWith('{') || rawText.trim().startsWith('['))) {
+          try {
+            serverData = JSON.parse(rawText);
+          } catch {
+            serverAttemptFailed = true;
+            serverErrorMsg = 'Resposta não-JSON recebida da API.';
+          }
+        } else {
+          serverAttemptFailed = true;
+          serverErrorMsg = rawText ? rawText.slice(0, 100) : 'Sem resposta do servidor';
+        }
+      } catch (netErr: any) {
+        serverAttemptFailed = true;
+        serverErrorMsg = netErr?.message || 'Falha de conexão com a API';
+      }
+
+      // If server confirmed success
+      if (serverData && serverData.success) {
+        await refreshSupabaseStatus();
+        setInitResult({
+          success: true,
+          message: serverData.message || "Tabela 'site_settings' e bucket de mídia verificados com sucesso no Supabase!",
+          details: serverData.details,
+        });
+        setIsInitializingTables(false);
+        return;
+      }
+
+      // 2. Direct Browser Fallback: verify and initialize directly via Supabase client in browser
+      const clientResult = await initializeOrVerifyBrowserTables(
+        siteContent,
+        companyConfig,
+        projects
+      );
+
       await refreshSupabaseStatus();
 
-      setInitResult({
-        success: data.success,
-        message: data.message || 'Verificação concluída.',
-        details: data.details,
-      });
+      if (clientResult.success) {
+        setInitResult({
+          success: true,
+          message: clientResult.message,
+          details: clientResult.details,
+        });
+      } else {
+        setInitResult({
+          success: false,
+          message:
+            serverData?.message ||
+            clientResult.message ||
+            `Não foi possível verificar as tabelas: ${serverErrorMsg}. Verifique se a URL e chaves do Supabase foram salvas.`,
+          details: clientResult.details || serverData?.details,
+        });
+      }
     } catch (err: any) {
       setInitResult({
         success: false,
-        message: `Erro ao comunicar com a API: ${err?.message || 'Falha de rede'}. Verifique se as credenciais do Supabase foram salvas.`,
+        message: `Falha na inicialização: ${err?.message || 'Erro inesperado'}. Verifique as credenciais do Supabase.`,
       });
     } finally {
       setIsInitializingTables(false);

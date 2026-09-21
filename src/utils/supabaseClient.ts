@@ -160,3 +160,154 @@ export async function fetchSiteDataDirectFromSupabase(): Promise<{
     return null;
   }
 }
+
+/**
+ * Inicializa e verifica tabelas e bucket de mídia diretamente através do cliente do navegador
+ */
+export async function initializeOrVerifyBrowserTables(
+  siteContent?: any,
+  companyConfig?: any,
+  projects?: any[]
+): Promise<{ success: boolean; message: string; details: any }> {
+  const client = getBrowserSupabase();
+  if (!client) {
+    return {
+      success: false,
+      message: 'Supabase não configurado no navegador. Salve a URL e a Chave Anon primeiro.',
+      details: null,
+    };
+  }
+
+  const results = {
+    database: false,
+    siteSettingsTable: false,
+    storageBucket: false,
+    seededRows: [] as string[],
+    error: '',
+  };
+
+  try {
+    const { data: existingData, error: tableErr } = await client
+      .from('site_settings')
+      .select('id')
+      .limit(10);
+
+    if (tableErr) {
+      results.error = tableErr.message;
+      return {
+        success: false,
+        message: `A tabela 'site_settings' não foi encontrada no Supabase: ${tableErr.message}. Copie o código da aba 'Tabelas & SQL' e execute no SQL Editor do painel Supabase.`,
+        details: results,
+      };
+    }
+
+    results.database = true;
+    results.siteSettingsTable = true;
+
+    const existingIds = new Set((existingData || []).map((row: any) => row.id));
+
+    // Seed missing rows if content provided
+    if (!existingIds.has('company_config') && companyConfig) {
+      await client.from('site_settings').upsert({
+        id: 'company_config',
+        data: companyConfig,
+        updated_at: new Date().toISOString(),
+      });
+      results.seededRows.push('company_config');
+    }
+
+    if (!existingIds.has('site_content') && siteContent) {
+      await client.from('site_settings').upsert({
+        id: 'site_content',
+        data: siteContent,
+        updated_at: new Date().toISOString(),
+      });
+      results.seededRows.push('site_content');
+    }
+
+    if (!existingIds.has('projects') && projects) {
+      await client.from('site_settings').upsert({
+        id: 'projects',
+        data: projects,
+        updated_at: new Date().toISOString(),
+      });
+      results.seededRows.push('projects');
+    }
+
+    // Try check storage bucket
+    try {
+      const { data: buckets } = await client.storage.listBuckets();
+      if (buckets && buckets.some((b) => b.name === 'transformar-media')) {
+        results.storageBucket = true;
+      }
+    } catch {
+      // ignore storage list if restricted by RLS
+    }
+
+    return {
+      success: true,
+      message: "Tabela 'site_settings' e banco de dados verificados com sucesso no Supabase! Dados ativos para sincronização entre navegadores.",
+      details: results,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: `Erro na verificação direta: ${err?.message || 'Erro de conexão'}`,
+      details: results,
+    };
+  }
+}
+
+/**
+ * Salva site_content diretamente no Supabase pelo navegador
+ */
+export async function saveSiteContentDirectToSupabase(content: any): Promise<boolean> {
+  const client = getBrowserSupabase();
+  if (!client) return false;
+  try {
+    const { error } = await client.from('site_settings').upsert({
+      id: 'site_content',
+      data: content,
+      updated_at: new Date().toISOString(),
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Salva company_config diretamente no Supabase pelo navegador
+ */
+export async function saveCompanyConfigDirectToSupabase(config: any): Promise<boolean> {
+  const client = getBrowserSupabase();
+  if (!client) return false;
+  try {
+    const { error } = await client.from('site_settings').upsert({
+      id: 'company_config',
+      data: config,
+      updated_at: new Date().toISOString(),
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Salva projects diretamente no Supabase pelo navegador
+ */
+export async function saveProjectsDirectToSupabase(projects: any[]): Promise<boolean> {
+  const client = getBrowserSupabase();
+  if (!client) return false;
+  try {
+    const { error } = await client.from('site_settings').upsert({
+      id: 'projects',
+      data: projects,
+      updated_at: new Date().toISOString(),
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}

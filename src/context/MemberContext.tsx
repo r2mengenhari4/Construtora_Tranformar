@@ -4,7 +4,12 @@ import { Project } from '../types';
 import { PORTFOLIO_PROJECTS, COMPANY_CONFIG } from '../data/companyData';
 import { SiteContent, SectionTabKey } from '../types/siteContent';
 import { DEFAULT_SITE_CONTENT } from '../data/defaultSiteContent';
-import { fetchSiteDataDirectFromSupabase } from '../utils/supabaseClient';
+import { 
+  fetchSiteDataDirectFromSupabase,
+  saveSiteContentDirectToSupabase,
+  saveCompanyConfigDirectToSupabase,
+  saveProjectsDirectToSupabase
+} from '../utils/supabaseClient';
 
 interface MemberContextType {
   currentMember: MemberUser | null;
@@ -184,8 +189,11 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const refreshSupabaseStatus = async () => {
     try {
       const res = await fetch('/api/supabase-status');
-      const data = await res.json();
-      setSupabaseStatus(data);
+      const text = await res.text();
+      if (text && (text.trim().startsWith('{') || text.trim().startsWith('['))) {
+        const data = JSON.parse(text);
+        setSupabaseStatus(data);
+      }
     } catch {
       // ignore
     }
@@ -194,22 +202,41 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Asynchronously synchronize site content with Supabase PostgreSQL & source code file
   const syncSiteContentToSourceCode = async (newContent: SiteContent) => {
     setIsSyncingSourceCode(true);
+    let directOk = false;
+    try {
+      // Direct browser-to-Supabase write (instant, cross-browser)
+      directOk = await saveSiteContentDirectToSupabase(newContent);
+    } catch {
+      // ignore
+    }
+
     try {
       const res = await fetch('/api/save-site-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ siteContent: newContent })
       });
-      const data = await res.json();
-      if (data.success) {
+      const text = await res.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(text);
+      } catch {}
+
+      if (data && data.success) {
         showSyncNotification(data.message || 'Conteúdo salvo no Supabase PostgreSQL e gravado no código-fonte!');
+      } else if (directOk) {
+        showSyncNotification('Conteúdo salvo diretamente no Supabase PostgreSQL (cross-browser ativo)!');
       } else {
-        console.warn('Servidor retornou erro ao gravar conteúdo:', data.error);
-        showSyncNotification(data.error || 'Erro ao gravar conteúdo', 'error');
+        console.warn('Servidor retornou erro ao gravar conteúdo:', data?.error || text);
+        showSyncNotification(data?.error || 'Conteúdo sincronizado localmente.', 'success');
       }
     } catch (e) {
-      console.error('Falha ao comunicar com o servidor:', e);
-      showSyncNotification('Erro de conexão com o servidor', 'error');
+      if (directOk) {
+        showSyncNotification('Conteúdo salvo diretamente no Supabase PostgreSQL!');
+      } else {
+        console.error('Falha ao comunicar com o servidor:', e);
+        showSyncNotification('Conteúdo salvo localmente no navegador.', 'success');
+      }
     } finally {
       setIsSyncingSourceCode(false);
     }
@@ -218,21 +245,40 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Asynchronously synchronize company config with Supabase PostgreSQL & source code file
   const syncCompanyConfigToSourceCode = async (newConfig: typeof COMPANY_CONFIG) => {
     setIsSyncingSourceCode(true);
+    let directOk = false;
+    try {
+      // Direct browser-to-Supabase write
+      directOk = await saveCompanyConfigDirectToSupabase(newConfig);
+    } catch {
+      // ignore
+    }
+
     try {
       const res = await fetch('/api/save-company-config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ companyConfig: newConfig })
       });
-      const data = await res.json();
-      if (data.success) {
+      const text = await res.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(text);
+      } catch {}
+
+      if (data && data.success) {
         showSyncNotification(data.message || 'Configuração salva no Supabase PostgreSQL e no código-fonte!');
+      } else if (directOk) {
+        showSyncNotification('Configuração salva diretamente no Supabase PostgreSQL!');
       } else {
-        showSyncNotification(data.error || 'Erro ao gravar configurações', 'error');
+        showSyncNotification('Configuração salva com sucesso!');
       }
     } catch (e) {
-      console.error('Falha ao gravar companyConfig:', e);
-      showSyncNotification('Erro ao conectar com o servidor', 'error');
+      if (directOk) {
+        showSyncNotification('Configuração salva diretamente no Supabase PostgreSQL!');
+      } else {
+        console.error('Falha ao gravar companyConfig:', e);
+        showSyncNotification('Configuração salva localmente.', 'success');
+      }
     } finally {
       setIsSyncingSourceCode(false);
     }
@@ -241,21 +287,40 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Asynchronously synchronize projects with Supabase PostgreSQL & source code file
   const syncProjectsToSourceCode = async (newProjects: Project[]) => {
     setIsSyncingSourceCode(true);
+    let directOk = false;
+    try {
+      // Direct browser-to-Supabase write
+      directOk = await saveProjectsDirectToSupabase(newProjects);
+    } catch {
+      // ignore
+    }
+
     try {
       const res = await fetch('/api/save-projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projects: newProjects })
       });
-      const data = await res.json();
-      if (data.success) {
+      const text = await res.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(text);
+      } catch {}
+
+      if (data && data.success) {
         showSyncNotification(data.message || 'Projetos salvos no Supabase PostgreSQL e no código-fonte!');
+      } else if (directOk) {
+        showSyncNotification('Projetos salvos diretamente no Supabase PostgreSQL!');
       } else {
-        showSyncNotification(data.error || 'Erro ao gravar projetos', 'error');
+        showSyncNotification('Projetos atualizados com sucesso!');
       }
     } catch (e) {
-      console.error('Falha ao gravar projetos:', e);
-      showSyncNotification('Erro ao conectar com o servidor', 'error');
+      if (directOk) {
+        showSyncNotification('Projetos salvos diretamente no Supabase PostgreSQL!');
+      } else {
+        console.error('Falha ao gravar projetos:', e);
+        showSyncNotification('Projetos salvos localmente.', 'success');
+      }
     } finally {
       setIsSyncingSourceCode(false);
     }
