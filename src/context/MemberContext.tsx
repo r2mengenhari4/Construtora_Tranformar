@@ -4,6 +4,7 @@ import { Project } from '../types';
 import { PORTFOLIO_PROJECTS, COMPANY_CONFIG } from '../data/companyData';
 import { SiteContent, SectionTabKey } from '../types/siteContent';
 import { DEFAULT_SITE_CONTENT } from '../data/defaultSiteContent';
+import { fetchSiteDataDirectFromSupabase } from '../utils/supabaseClient';
 
 interface MemberContextType {
   currentMember: MemberUser | null;
@@ -327,7 +328,24 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           }
         }
       } catch (err) {
-        console.warn('Não foi possível carregar dados do servidor:', err);
+        console.warn('Não foi possível carregar dados via API, tentando conexão direta com Supabase:', err);
+        try {
+          const directData = await fetchSiteDataDirectFromSupabase();
+          if (directData) {
+            if (directData.siteContent) {
+              setSiteContent((prev) => ({ ...prev, ...directData.siteContent }));
+            }
+            if (directData.companyConfig) {
+              setCompanyConfig((prev) => ({ ...prev, ...directData.companyConfig }));
+            }
+            if (Array.isArray(directData.projects) && directData.projects.length > 0) {
+              setProjects(directData.projects);
+            }
+            console.log('[CONSTRUTORA] Dados carregados diretamente via Supabase client-side.');
+          }
+        } catch (directErr) {
+          console.warn('Falha também no fallback direto do Supabase:', directErr);
+        }
       }
     };
 
