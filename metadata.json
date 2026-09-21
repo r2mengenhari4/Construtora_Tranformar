@@ -1,0 +1,8 @@
+{
+  "name": "Construtora Transformar - Maricá RJ",
+  "description": "Projetos de arquitetura e engenharia, planejamento e construção residencial em Maricá e região. Solução completa do terreno à entrega das chaves.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

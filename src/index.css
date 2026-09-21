@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+}
+
+/* Custom Gold and Navy styling reflecting Construtora Transformar branding */
+:root {
+  --color-brand-navy: #0B1528;
+  --color-brand-navy-light: #142340;
+  --color-brand-navy-card: #101E38;
+  --color-brand-gold: #C5A869;
+  --color-brand-gold-hover: #D8BD80;
+  --color-brand-gold-dark: #A48645;
+}
+
+.text-gold-gradient {
+  background: linear-gradient(135deg, #F5E6C8 0%, #D4AF37 50%, #C5A869 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #DFBA73 0%, #C5A869 50%, #B29048 100%);
+}
+
+.border-gold-subtle {
+  border-color: rgba(197, 168, 105, 0.25);
+}
+
