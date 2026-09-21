@@ -44,18 +44,18 @@ export const AboutSection: React.FC = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0C243D] via-transparent to-transparent opacity-80 pointer-events-none" />
 
-                <div className="absolute bottom-6 left-6 right-6 text-white pointer-events-none z-10">
+                <div className="absolute bottom-6 left-6 right-24 sm:right-28 max-w-[230px] sm:max-w-[260px] text-white pointer-events-none z-10">
                   <span className="text-xs font-semibold uppercase tracking-widest text-amber-400 block mb-1">
                     {about.imageBadgeCategory || 'Canteiro & Engenharia'}
                   </span>
-                  <p className="text-base font-bold leading-snug">
+                  <p className="text-sm sm:text-base font-bold leading-snug">
                     {about.imageBadgeText || 'Rigor técnico nos projetos e presença constante no canteiro de obras.'}
                   </p>
                 </div>
               </div>
 
               {/* Floating Badge with the official Circular Brand Seal */}
-              <div className="absolute -bottom-6 -right-6 sm:-right-8 bg-[#0C243D] p-3 rounded-full shadow-2xl border-2 border-amber-500/40">
+              <div className="absolute -bottom-6 -right-6 sm:-right-8 bg-[#0C243D] p-3 rounded-full shadow-2xl border-2 border-amber-500/40 z-20">
                 <Logo variant="badge" size="lg" theme="dark" />
               </div>
 
