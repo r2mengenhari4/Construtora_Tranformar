@@ -26,7 +26,8 @@ export const MemberAdminToolbar: React.FC = () => {
     isSyncingSourceCode,
     sourceCodeSyncNotice,
     clearSyncNotice,
-    supabaseStatus
+    supabaseStatus,
+    openSupabaseConfigModal
   } = useMember();
 
   const [isMinimized, setIsMinimized] = useState(false);
@@ -106,6 +107,16 @@ export const MemberAdminToolbar: React.FC = () => {
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">+ Nova Obra</span>
                 <span className="sm:hidden">+ Obra</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={openSupabaseConfigModal}
+                className="p-2 rounded-xl text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors cursor-pointer"
+                title="Conferir e Modificar Conexão Supabase"
+                aria-label="Conferir e Modificar Conexão Supabase"
+              >
+                <Database className="w-3.5 h-3.5" />
               </button>
 
               <button

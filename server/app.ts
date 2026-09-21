@@ -8,6 +8,8 @@ import {
   saveCompanyConfigToSupabase,
   saveProjectsToSupabase,
   uploadMediaToSupabaseStorage,
+  updateRuntimeSupabaseConfig,
+  initializeSupabaseTablesAndSeed,
 } from "./supabase";
 
 export const app = express();
@@ -58,6 +60,72 @@ app.get("/api/supabase-status", async (_req, res) => {
     res.json(status);
   } catch (err: any) {
     res.status(500).json({ error: err?.message || "Erro no diagnóstico do Supabase" });
+  }
+});
+
+/**
+ * GET /api/supabase-config
+ * Returns current configuration info (URL and masked keys) and diagnostic
+ */
+app.get("/api/supabase-config", async (_req, res) => {
+  try {
+    const url = process.env.SUPABASE_URL || "";
+    const anonKey = process.env.SUPABASE_ANON_KEY || "";
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+    const maskKey = (k: string) => {
+      if (!k || k.length < 8) return "";
+      return `${k.substring(0, 4)}...${k.substring(k.length - 4)}`;
+    };
+
+    const diagnostic = await getSupabaseDiagnostic();
+
+    res.json({
+      success: true,
+      url,
+      hasAnonKey: Boolean(anonKey),
+      hasServiceRoleKey: Boolean(serviceRoleKey),
+      anonKeyMasked: maskKey(anonKey),
+      serviceRoleKeyMasked: maskKey(serviceRoleKey),
+      diagnostic,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || "Erro ao consultar configuração" });
+  }
+});
+
+/**
+ * POST /api/supabase-config
+ * Updates Supabase credentials at runtime, verifies connection and persists
+ */
+app.post("/api/supabase-config", async (req, res) => {
+  try {
+    const { url, anonKey, serviceRoleKey } = req.body;
+    if (!url || typeof url !== "string") {
+      res.status(400).json({ success: false, message: "URL do projeto Supabase é obrigatória." });
+      return;
+    }
+
+    const result = await updateRuntimeSupabaseConfig(url, anonKey, serviceRoleKey);
+    res.json(result);
+  } catch (err: any) {
+    console.error("[SERVER] Erro ao salvar configuração do Supabase:", err);
+    res.status(500).json({ success: false, message: err?.message || "Erro ao salvar credenciais" });
+  }
+});
+
+/**
+ * POST /api/supabase-init-tables
+ * Verifies and initializes table site_settings and media bucket on Supabase
+ */
+app.post("/api/supabase-init-tables", async (req, res) => {
+  try {
+    const { siteContent, companyConfig, projects } = req.body;
+    const result = await initializeSupabaseTablesAndSeed(siteContent, companyConfig, projects);
+    res.json(result);
+  } catch (err: any) {
+    console.error("[SERVER] Erro ao inicializar tabelas no Supabase:", err);
+    res.status(500).json({ success: false, message: err?.message || "Erro ao inicializar tabelas" });
   }
 });
 

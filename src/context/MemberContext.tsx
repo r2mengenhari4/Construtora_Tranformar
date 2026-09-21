@@ -60,6 +60,11 @@ interface MemberContextType {
     bucketName?: string;
   } | null;
   refreshSupabaseStatus: () => Promise<void>;
+
+  // Supabase Manager Modal
+  isSupabaseConfigModalOpen: boolean;
+  openSupabaseConfigModal: () => void;
+  closeSupabaseConfigModal: () => void;
 }
 
 const STORAGE_AUTH_KEY = 'transformar_member_auth_session';
@@ -156,6 +161,11 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const [isSiteEditorOpen, setIsSiteEditorOpen] = useState(false);
   const [activeEditorTab, setActiveEditorTab] = useState<SectionTabKey>('inicio');
+
+  // Supabase Manager Modal state
+  const [isSupabaseConfigModalOpen, setIsSupabaseConfigModalOpen] = useState(false);
+  const openSupabaseConfigModal = () => setIsSupabaseConfigModalOpen(true);
+  const closeSupabaseConfigModal = () => setIsSupabaseConfigModalOpen(false);
 
   // Source code & Supabase synchronization indicator
   const [isSyncingSourceCode, setIsSyncingSourceCode] = useState(false);
@@ -351,6 +361,30 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     loadRemoteSiteData();
     refreshSupabaseStatus();
+
+    // Cross-browser persistence:
+    // Polls Supabase / API periodically every 30s so all browsers/visitors receive the latest data
+    const interval = setInterval(() => {
+      loadRemoteSiteData();
+      refreshSupabaseStatus();
+    }, 30000);
+
+    // Also re-sync when tab becomes active / focused
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        loadRemoteSiteData();
+        refreshSupabaseStatus();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+    };
   }, []);
 
   // Authentication methods
@@ -585,7 +619,10 @@ export const MemberProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         sourceCodeSyncNotice,
         clearSyncNotice,
         supabaseStatus,
-        refreshSupabaseStatus
+        refreshSupabaseStatus,
+        isSupabaseConfigModalOpen,
+        openSupabaseConfigModal,
+        closeSupabaseConfigModal
       }}
     >
       {children}

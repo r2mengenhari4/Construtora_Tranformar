@@ -1,8 +1,27 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import fs from "fs";
+import path from "path";
 
 let supabaseClient: SupabaseClient | null = null;
 const BUCKET_NAME = "transformar-media";
 let bucketChecked = false;
+const RUNTIME_CONFIG_PATH = path.join(process.cwd(), "supabase-runtime-config.json");
+
+// Load stored runtime config if present and environment variables are not already set
+try {
+  if (!process.env.SUPABASE_URL && fs.existsSync(RUNTIME_CONFIG_PATH)) {
+    const raw = fs.readFileSync(RUNTIME_CONFIG_PATH, "utf-8");
+    const parsed = JSON.parse(raw);
+    if (parsed.url) {
+      process.env.SUPABASE_URL = parsed.url;
+      if (parsed.anonKey) process.env.SUPABASE_ANON_KEY = parsed.anonKey;
+      if (parsed.serviceRoleKey) process.env.SUPABASE_SERVICE_ROLE_KEY = parsed.serviceRoleKey;
+      console.log(`[SUPABASE] Credenciais carregadas do arquivo de configuração em runtime: ${parsed.url}`);
+    }
+  }
+} catch (e) {
+  console.warn("[SUPABASE] Falha ao carregar supabase-runtime-config.json:", e);
+}
 
 /**
  * Lazy-initializes and returns the Supabase client if credentials are configured
@@ -29,25 +48,206 @@ export function getSupabase(): SupabaseClient | null {
 }
 
 /**
+ * Updates runtime credentials, recreates the client, and persists to disk
+ */
+export async function updateRuntimeSupabaseConfig(
+  url: string,
+  anonKey?: string,
+  serviceRoleKey?: string
+): Promise<{ success: boolean; message: string; diagnostic: any }> {
+  try {
+    const cleanUrl = url.trim();
+    const cleanAnon = anonKey?.trim() || "";
+    const cleanService = serviceRoleKey?.trim() || "";
+
+    if (!cleanUrl) {
+      return {
+        success: false,
+        message: "URL do Supabase inválida ou em branco.",
+        diagnostic: await getSupabaseDiagnostic(),
+      };
+    }
+
+    // Update in process.env
+    process.env.SUPABASE_URL = cleanUrl;
+    if (cleanAnon) process.env.SUPABASE_ANON_KEY = cleanAnon;
+    if (cleanService) process.env.SUPABASE_SERVICE_ROLE_KEY = cleanService;
+
+    // Reset and recreate client
+    const key = cleanService || cleanAnon;
+    if (key) {
+      supabaseClient = createClient(cleanUrl, key, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      });
+    } else {
+      supabaseClient = null;
+    }
+    bucketChecked = false;
+
+    // Persist to file if possible
+    try {
+      fs.writeFileSync(
+        RUNTIME_CONFIG_PATH,
+        JSON.stringify(
+          {
+            url: cleanUrl,
+            anonKey: cleanAnon,
+            serviceRoleKey: cleanService,
+            updatedAt: new Date().toISOString(),
+          },
+          null,
+          2
+        ),
+        "utf-8"
+      );
+    } catch (fsErr) {
+      console.warn("[SUPABASE] Não foi possível salvar supabase-runtime-config.json:", fsErr);
+    }
+
+    const diagnostic = await getSupabaseDiagnostic();
+    return {
+      success: diagnostic.configured && diagnostic.database,
+      message: diagnostic.database
+        ? "Conexão com o Supabase estabelecida e testada com sucesso!"
+        : diagnostic.configured
+        ? "Conectado ao Supabase, mas a tabela 'site_settings' necessita ser inicializada."
+        : "Verifique a URL e as chaves informadas.",
+      diagnostic,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: `Erro ao salvar credenciais: ${err?.message || "Desconhecido"}`,
+      diagnostic: await getSupabaseDiagnostic(),
+    };
+  }
+}
+
+/**
  * Ensures the public storage bucket exists
  */
-async function ensureStorageBucket(client: SupabaseClient): Promise<void> {
-  if (bucketChecked) return;
+export async function ensureStorageBucket(client?: SupabaseClient | null): Promise<boolean> {
+  const sb = client || getSupabase();
+  if (!sb) return false;
+
   try {
-    const { data: buckets, error } = await client.storage.listBuckets();
+    const { data: buckets, error } = await sb.storage.listBuckets();
     if (!error && buckets) {
       const exists = buckets.some((b) => b.name === BUCKET_NAME);
       if (!exists) {
         console.log(`[SUPABASE STORAGE] Criando bucket público "${BUCKET_NAME}"...`);
-        await client.storage.createBucket(BUCKET_NAME, {
+        const { error: createErr } = await sb.storage.createBucket(BUCKET_NAME, {
           public: true,
           fileSizeLimit: 60 * 1024 * 1024, // 60MB max
         });
+        if (createErr) {
+          console.warn("[SUPABASE STORAGE] Aviso ao criar bucket:", createErr.message);
+          return false;
+        }
       }
+      bucketChecked = true;
+      return true;
     }
-    bucketChecked = true;
+    return false;
   } catch (err) {
     console.warn("[SUPABASE STORAGE] Aviso ao verificar/criar bucket:", err);
+    return false;
+  }
+}
+
+/**
+ * Verifies table site_settings and storage bucket, initializes data if empty
+ */
+export async function initializeSupabaseTablesAndSeed(
+  defaultContent?: any,
+  defaultConfig?: any,
+  defaultProjects?: any[]
+): Promise<{ success: boolean; message: string; details: any }> {
+  const client = getSupabase();
+  if (!client) {
+    return {
+      success: false,
+      message: "Supabase não configurado. Por favor, preencha a URL e a Chave de API primeiro.",
+      details: null,
+    };
+  }
+
+  const results = {
+    database: false,
+    siteSettingsTable: false,
+    storageBucket: false,
+    seededRows: [] as string[],
+    error: "",
+  };
+
+  try {
+    // 1. Check if site_settings table exists by selecting 1 row
+    const { data: existingData, error: tableErr } = await client
+      .from("site_settings")
+      .select("id")
+      .limit(10);
+
+    if (tableErr) {
+      results.error = tableErr.message;
+      return {
+        success: false,
+        message: `A tabela 'site_settings' não foi encontrada ou não possui permissão: ${tableErr.message}. Execute o script supabase-schema.sql no SQL Editor do Supabase.`,
+        details: results,
+      };
+    }
+
+    results.database = true;
+    results.siteSettingsTable = true;
+
+    // Check existing keys
+    const existingIds = new Set((existingData || []).map((row: any) => row.id));
+
+    // Seed initial records if not present
+    if (!existingIds.has("company_config") && defaultConfig) {
+      await client.from("site_settings").upsert({
+        id: "company_config",
+        data: defaultConfig,
+        updated_at: new Date().toISOString(),
+      });
+      results.seededRows.push("company_config");
+    }
+
+    if (!existingIds.has("site_content") && defaultContent) {
+      await client.from("site_settings").upsert({
+        id: "site_content",
+        data: defaultContent,
+        updated_at: new Date().toISOString(),
+      });
+      results.seededRows.push("site_content");
+    }
+
+    if (!existingIds.has("projects") && defaultProjects) {
+      await client.from("site_settings").upsert({
+        id: "projects",
+        data: defaultProjects,
+        updated_at: new Date().toISOString(),
+      });
+      results.seededRows.push("projects");
+    }
+
+    // 2. Check and ensure storage bucket
+    const bucketOk = await ensureStorageBucket(client);
+    results.storageBucket = bucketOk;
+
+    return {
+      success: true,
+      message: "Tabela 'site_settings' e bucket de mídias verificados e prontos para sincronização cross-browser!",
+      details: results,
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      message: `Erro na verificação de tabelas: ${err?.message || "Desconhecido"}`,
+      details: results,
+    };
   }
 }
 

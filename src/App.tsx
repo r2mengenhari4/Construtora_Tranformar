@@ -24,8 +24,11 @@ import { ProjectEditorModal } from './components/ProjectEditorModal';
 import { CompanyConfigEditorModal } from './components/CompanyConfigEditorModal';
 import { MemberAdminToolbar } from './components/MemberAdminToolbar';
 import { SiteEditorModal } from './components/SiteEditorModal';
+import { SupabaseManagerModal } from './components/SupabaseManagerModal';
+import { useMember } from './context/MemberContext';
 
 function MainAppContent() {
+  const { isSupabaseConfigModalOpen, closeSupabaseConfigModal } = useMember();
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [prefilledService, setPrefilledService] = useState<string>('Projeto + construção');
   const [prefilledProject, setPrefilledProject] = useState<string>('');
@@ -105,6 +108,12 @@ function MainAppContent() {
 
       {/* Modal Geral de Edição de Conteúdo de Todas as Abas (CRUD do Site) */}
       <SiteEditorModal />
+
+      {/* Modal de Gestão, Verificação e Configuração do Supabase */}
+      <SupabaseManagerModal
+        isOpen={isSupabaseConfigModalOpen}
+        onClose={closeSupabaseConfigModal}
+      />
 
       {/* Modal Interativo de Solicitação de Orçamento Rápido */}
       <BudgetModal
