@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMember } from '../context/MemberContext';
-import { Project, ProjectCategory, ProjectStatus } from '../types';
+import { Project, ProjectAmenity, ProjectCategory, ProjectStatus } from '../types';
 import { 
   X, 
   Upload, 
@@ -14,7 +14,14 @@ import {
   Link as LinkIcon,
   Video,
   Film,
-  Play
+  Play,
+  Waves,
+  Flame,
+  Car,
+  SunMedium,
+  Trees,
+  Home,
+  ShieldCheck
 } from 'lucide-react';
 import { 
   isVideoMedia, 
@@ -23,6 +30,30 @@ import {
   readFileAsDataURL,
   uploadMediaAssetToServer 
 } from '../utils/mediaUtils';
+
+const PRESET_AMENITIES: { icon: string; label: string }[] = [
+  { icon: 'Waves', label: 'Piscina & Lazer' },
+  { icon: 'Flame', label: 'Área Gourmet' },
+  { icon: 'Car', label: 'Garagem' },
+  { icon: 'SunMedium', label: 'Solário & Deck' },
+  { icon: 'Sparkles', label: 'Alto Padrão' },
+  { icon: 'Trees', label: 'Jardim & Quintal' },
+  { icon: 'Home', label: 'Living Integrado' },
+  { icon: 'ShieldCheck', label: 'Segurança / Condomínio' },
+];
+
+const renderAmenityPreviewIcon = (iconName: string) => {
+  switch (iconName) {
+    case 'Waves': return <Waves className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+    case 'Flame': return <Flame className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+    case 'Car': return <Car className="w-3.5 h-3.5 text-slate-500 shrink-0" />;
+    case 'SunMedium': return <SunMedium className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+    case 'Trees': return <Trees className="w-3.5 h-3.5 text-emerald-600 shrink-0" />;
+    case 'Home': return <Home className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+    case 'ShieldCheck': return <ShieldCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+    default: return <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+  }
+};
 
 const ARCHITECTURAL_SAMPLE_PHOTOS = [
   'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
@@ -55,6 +86,9 @@ export const ProjectEditorModal: React.FC = () => {
   const [gallery, setGallery] = useState<string[]>([]);
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeatureText, setNewFeatureText] = useState('');
+  const [amenities, setAmenities] = useState<ProjectAmenity[]>([]);
+  const [newAmenityLabel, setNewAmenityLabel] = useState('');
+  const [newAmenityIcon, setNewAmenityIcon] = useState('Waves');
   const [customImageUrl, setCustomImageUrl] = useState('');
   const [validationError, setValidationError] = useState('');
   const [mediaStatusMessage, setMediaStatusMessage] = useState<{ text: string; type: 'error' | 'success' | 'info' } | null>(null);
@@ -76,6 +110,14 @@ export const ProjectEditorModal: React.FC = () => {
       setMainImage(editingProject.mainImage);
       setGallery(editingProject.gallery || []);
       setFeatures(editingProject.features || []);
+      setAmenities(
+        editingProject.amenities && Array.isArray(editingProject.amenities)
+          ? [...editingProject.amenities]
+          : [
+              { icon: 'Waves', label: 'Piscina & Lazer' },
+              { icon: 'Flame', label: 'Área Gourmet' }
+            ]
+      );
     } else {
       // Default blank new project
       setTitle('');
@@ -95,9 +137,15 @@ export const ProjectEditorModal: React.FC = () => {
         'Área gourmet com churrasqueira',
         'Tubulação preparada para água quente e solar'
       ]);
+      setAmenities([
+        { icon: 'Waves', label: 'Piscina & Lazer' },
+        { icon: 'Flame', label: 'Área Gourmet' }
+      ]);
     }
     setValidationError('');
     setNewFeatureText('');
+    setNewAmenityLabel('');
+    setNewAmenityIcon('Waves');
     setCustomImageUrl('');
   }, [editingProject, isProjectModalOpen]);
 
@@ -167,6 +215,39 @@ export const ProjectEditorModal: React.FC = () => {
 
   const handleRemoveFeature = (index: number) => {
     setFeatures((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleTogglePresetAmenity = (preset: { icon: string; label: string }) => {
+    setAmenities((prev) => {
+      const existsIndex = prev.findIndex(
+        (a) => a.label.trim().toLowerCase() === preset.label.trim().toLowerCase() ||
+               (a.icon === preset.icon && a.label.trim().toLowerCase().includes(preset.label.trim().toLowerCase()))
+      );
+      if (existsIndex >= 0) {
+        return prev.filter((_, i) => i !== existsIndex);
+      } else {
+        return [...prev, { icon: preset.icon, label: preset.label }];
+      }
+    });
+  };
+
+  const handleAddCustomAmenity = () => {
+    const text = newAmenityLabel.trim();
+    if (!text) return;
+    setAmenities((prev) => [...prev, { icon: newAmenityIcon, label: text }]);
+    setNewAmenityLabel('');
+  };
+
+  const handleRemoveAmenity = (index: number) => {
+    setAmenities((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateAmenity = (index: number, updated: Partial<ProjectAmenity>) => {
+    setAmenities((prev) => {
+      const list = [...prev];
+      list[index] = { ...list[index], ...updated };
+      return list;
+    });
   };
 
   const handleAddCustomImageUrl = async () => {
@@ -249,12 +330,7 @@ export const ProjectEditorModal: React.FC = () => {
       features: features.length > 0 ? features : ['Acabamento de alto padrão', 'Projeto integrado'],
       mainImage,
       gallery: gallery.length > 0 ? gallery : [mainImage],
-      amenities: [
-        { icon: 'Waves', label: 'Piscina & Lazer' },
-        { icon: 'Flame', label: 'Área Gourmet' },
-        { icon: 'Car', label: 'Garagem' },
-        { icon: 'Sparkles', label: 'Alto Padrão' }
-      ]
+      amenities: amenities
     };
 
     saveProject(projectData);
@@ -687,6 +763,184 @@ export const ProjectEditorModal: React.FC = () => {
                   </button>
                 </span>
               ))}
+            </div>
+          </div>
+
+          {/* Section 4: Destaques Inferiores do Card (Piscina, Gourmet, Lazer, etc.) */}
+          <div className="space-y-4 pt-3 border-t border-slate-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-1 border-b border-slate-100">
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <span>4. Destaques Inferiores do Card (Piscina, Lazer, Gourmet, etc.)</span>
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full lowercase">
+                    {amenities.length} {amenities.length === 1 ? 'destaque ativo' : 'destaques ativos'}
+                  </span>
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Decida exatamente o que deve ou não aparecer na barra inferior do card no portfólio.
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Toggle Presets */}
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-2">
+                Atalhos Rápidos (Clique para ativar ou desativar no card):
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {PRESET_AMENITIES.map((preset) => {
+                  const isSelected = amenities.some(
+                    (a) => a.label.trim().toLowerCase() === preset.label.trim().toLowerCase() ||
+                           (a.icon === preset.icon && a.label.trim().toLowerCase().includes(preset.label.trim().toLowerCase()))
+                  );
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => handleTogglePresetAmenity(preset)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all cursor-pointer border ${
+                        isSelected
+                          ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-xs font-semibold'
+                          : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      {renderAmenityPreviewIcon(preset.icon)}
+                      <span>{preset.label}</span>
+                      {isSelected ? (
+                        <Check className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
+                      ) : (
+                        <Plus className="w-3.5 h-3.5 text-slate-400" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Active Items with direct rename & icon selector */}
+            {amenities.length > 0 ? (
+              <div className="space-y-2">
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                  Destaques Ativos no Card (Personalize o texto, ícone ou remova):
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {amenities.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 p-2 bg-white rounded-xl border border-slate-200 hover:border-amber-400 transition-colors shadow-2xs"
+                    >
+                      <select
+                        value={item.icon}
+                        onChange={(e) => handleUpdateAmenity(idx, { icon: e.target.value })}
+                        className="px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 cursor-pointer"
+                        title="Trocar ícone"
+                      >
+                        <option value="Waves">🌊 Piscina</option>
+                        <option value="Flame">🔥 Gourmet</option>
+                        <option value="Car">🚗 Garagem</option>
+                        <option value="SunMedium">☀️ Solário</option>
+                        <option value="Trees">🌿 Jardim</option>
+                        <option value="Home">🏠 Casa</option>
+                        <option value="Sparkles">✨ Padrão</option>
+                        <option value="ShieldCheck">🛡️ Segurança</option>
+                      </select>
+
+                      <input
+                        type="text"
+                        value={item.label}
+                        onChange={(e) => handleUpdateAmenity(idx, { label: e.target.value })}
+                        placeholder="Nome do destaque"
+                        className="flex-1 px-2.5 py-1 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-amber-400 font-medium text-slate-800"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAmenity(idx)}
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                        title="Remover do card"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200 text-center">
+                <p className="text-xs text-amber-900 font-medium">
+                  Nenhum destaque inferior ativo. O card exibirá uma barra limpa apenas com o link &ldquo;Ver detalhes&rdquo;.
+                </p>
+              </div>
+            )}
+
+            {/* Add Custom Highlight */}
+            <div className="pt-2">
+              <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                Adicionar Outro Destaque Personalizado:
+              </span>
+              <div className="flex gap-2">
+                <select
+                  value={newAmenityIcon}
+                  onChange={(e) => setNewAmenityIcon(e.target.value)}
+                  className="px-2.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-700 cursor-pointer shrink-0"
+                >
+                  <option value="Waves">🌊 Piscina</option>
+                  <option value="Flame">🔥 Gourmet</option>
+                  <option value="Car">🚗 Garagem</option>
+                  <option value="SunMedium">☀️ Solário</option>
+                  <option value="Trees">🌿 Jardim</option>
+                  <option value="Home">🏠 Casa</option>
+                  <option value="Sparkles">✨ Padrão</option>
+                  <option value="ShieldCheck">🛡️ Segurança</option>
+                </select>
+                <input
+                  type="text"
+                  value={newAmenityLabel}
+                  onChange={(e) => setNewAmenityLabel(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddCustomAmenity();
+                    }
+                  }}
+                  placeholder="Ex: Piscina Aquecida, Spa & Sauna, Placas Solares..."
+                  className="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:border-amber-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCustomAmenity}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Adicionar</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Live Preview of the Card Footer */}
+            <div className="pt-2">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                Prévia ao vivo no rodapé do card:
+              </span>
+              <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs text-slate-600 font-medium">
+                <div className="flex flex-wrap items-center gap-3">
+                  {amenities.length > 0 ? (
+                    amenities.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5">
+                        {renderAmenityPreviewIcon(item.icon)}
+                        <span className="font-medium text-slate-700">{item.label}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-slate-400 italic text-xs">
+                      (Nenhum destaque no rodapé — barra exibirá apenas &ldquo;Ver detalhes&rdquo;)
+                    </span>
+                  )}
+                </div>
+                <span className="text-[11px] font-semibold text-amber-700 underline shrink-0 ml-auto">
+                  Ver detalhes
+                </span>
+              </div>
             </div>
           </div>
 

@@ -23,7 +23,9 @@ import {
   Trash2,
   PlusCircle,
   Play,
-  Video as VideoIcon
+  Video as VideoIcon,
+  Trees,
+  ShieldCheck
 } from 'lucide-react';
 
 interface PortfolioSectionProps {
@@ -95,11 +97,14 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
 
   const getAmenityIcon = (icon: string) => {
     switch (icon) {
-      case 'Waves': return <Waves className="w-3.5 h-3.5 text-amber-600" />;
-      case 'Flame': return <Flame className="w-3.5 h-3.5 text-amber-600" />;
-      case 'Car': return <Car className="w-3.5 h-3.5 text-slate-500" />;
-      case 'SunMedium': return <SunMedium className="w-3.5 h-3.5 text-amber-600" />;
-      default: return <Sparkles className="w-3.5 h-3.5 text-amber-600" />;
+      case 'Waves': return <Waves className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+      case 'Flame': return <Flame className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+      case 'Car': return <Car className="w-3.5 h-3.5 text-slate-500 shrink-0" />;
+      case 'SunMedium': return <SunMedium className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+      case 'Trees': return <Trees className="w-3.5 h-3.5 text-emerald-600 shrink-0" />;
+      case 'Home': return <Home className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+      case 'ShieldCheck': return <ShieldCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+      default: return <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
     }
   };
 
@@ -291,16 +296,16 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                 </div>
 
                 {/* Amenities Strip: Refined minimalist line */}
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
-                  <div className="flex items-center gap-3">
-                    {project.amenities.slice(0, 2).map((amenity, i) => (
-                      <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600">
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium gap-2">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+                    {(project.amenities || []).map((amenity, i) => (
+                      <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600 shrink-0">
                         {getAmenityIcon(amenity.icon)}
-                        <span className="truncate">{amenity.label}</span>
+                        <span className="truncate max-w-[140px]">{amenity.label}</span>
                       </div>
                     ))}
                   </div>
-                  <span className="text-[11px] font-semibold text-amber-700 group-hover:underline">
+                  <span className="text-[11px] font-semibold text-amber-700 group-hover:underline shrink-0 ml-auto">
                     Ver detalhes
                   </span>
                 </div>
@@ -497,6 +502,21 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                   <span className="text-sm sm:text-base font-bold text-amber-600">{selectedProject.status}</span>
                 </div>
               </div>
+
+              {/* Amenities / Destaques do Projeto */}
+              {selectedProject.amenities && selectedProject.amenities.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mb-6">
+                  {selectedProject.amenities.map((am, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-200/70 shadow-2xs"
+                    >
+                      {getAmenityIcon(am.icon)}
+                      <span>{am.label}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {/* Description */}
               <div className="mb-6">
