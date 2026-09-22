@@ -128,6 +128,14 @@ export const MediaView: React.FC<MediaViewProps> = ({
           alt={alt}
           className={className}
           loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (!target.dataset.fallback) {
+              target.dataset.fallback = 'true';
+              target.src = '/images/etapa1.jpg';
+            }
+          }}
         />
       </div>
     );

@@ -72,42 +72,48 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
         "title": "Conhecemos seu terreno",
         "description": "Análise topográfica, insolação, ventos predominantes e regras urbanísticas do condomínio ou município de Maricá.",
         "deliverable": "Estudo de viabilidade e aproveitamento do lote",
-        "icon": "MapPin"
+        "icon": "MapPin",
+        "image": "https://ozhrzbnbqivoxgcfmtnz.supabase.co/storage/v1/object/public/transformar-media/timeline_etapa_01_terreno.jpg"
       },
       {
         "number": "02",
         "title": "Entendemos suas necessidades",
         "description": "Reunião de briefing detalhado para mapear o estilo arquitetônico desejado, rotina familiar, orçamento e expectativas.",
         "deliverable": "Programa de necessidades e alinhamento orçamentário",
-        "icon": "MessageSquareText"
+        "icon": "MessageSquareText",
+        "image": "https://ozhrzbnbqivoxgcfmtnz.supabase.co/storage/v1/object/public/transformar-media/timeline_etapa_02_briefing_personalizado.jpg"
       },
       {
         "number": "03",
         "title": "Desenvolvemos os projetos",
         "description": "Criação do projeto arquitetônico 3D e todos os projetos complementares de engenharia (estrutural, elétrico e hidrossanitário).",
         "deliverable": "Imagens fotorrealistas, plantas e documentação para aprovação",
-        "icon": "PenTool"
+        "icon": "PenTool",
+        "image": "https://ozhrzbnbqivoxgcfmtnz.supabase.co/storage/v1/object/public/transformar-media/timeline_etapa_03_projetos.jpg"
       },
       {
         "number": "04",
         "title": "Planejamos sua obra",
         "description": "Elaboração do cronograma físico-financeiro detalhado, lista de materiais e planejamento de suprimentos.",
         "deliverable": "Previsibilidade de prazos, custos transparentes e sem surpresas",
-        "icon": "CalendarCheck"
+        "icon": "CalendarCheck",
+        "image": "https://ozhrzbnbqivoxgcfmtnz.supabase.co/storage/v1/object/public/transformar-media/timeline_etapa_04_planejamento.jpg"
       },
       {
         "number": "05",
         "title": "Executamos a construção",
         "description": "Obras conduzidas com rigor técnico, equipe especializada e relatórios periódicos de acompanhamento para você.",
         "deliverable": "Gestão integral com acompanhamento do engenheiro responsável",
-        "icon": "HardHat"
+        "icon": "HardHat",
+        "image": "https://ozhrzbnbqivoxgcfmtnz.supabase.co/storage/v1/object/public/transformar-media/timeline_etapa_05_construcao.jpg"
       },
       {
         "number": "06",
         "title": "Entregamos sua casa",
         "description": "Vistoria final detalhada, entrega de todos os manuais técnicos, projeto as-built e a entrega oficial das chaves.",
         "deliverable": "Sua residência pronta para morar com garantia e tranquilidade",
-        "icon": "KeyRound"
+        "icon": "KeyRound",
+        "image": "https://ozhrzbnbqivoxgcfmtnz.supabase.co/storage/v1/object/public/transformar-media/timeline_etapa_06_entrega.jpg"
       }
     ]
   },

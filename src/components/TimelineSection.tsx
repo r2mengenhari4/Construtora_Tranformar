@@ -176,11 +176,11 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({ onOpenBudgetMo
             </div>
 
             {/* Visual preview card for step (Photo or Short Video up to 30s) */}
-            <div className="lg:col-span-5">
-              <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl group aspect-[4/3] bg-slate-950">
+            <div className="lg:col-span-5 flex flex-col gap-3">
+              <div className="relative rounded-2xl overflow-hidden border border-white/15 shadow-2xl group aspect-[4/3] bg-slate-950">
                 <MediaView
-                  src={activeStep.image || 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f8?auto=format&fit=crop&w=800&q=80'}
-                  alt={activeStep.title}
+                  src={activeStep.image || `/images/etapa${safeIndex + 1}.jpg`}
+                  alt={`Etapa ${activeStep.number} - ${activeStep.title}`}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   containerClassName="w-full h-full relative"
                   autoPlay={true}
@@ -190,15 +190,54 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({ onOpenBudgetMo
                   badgePosition="top-left"
                   interactiveControls={true}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1528] via-transparent to-transparent opacity-80 pointer-events-none" />
-                <div className="absolute bottom-5 left-5 right-5 pointer-events-none z-10">
-                  <span className="text-[11px] font-semibold text-amber-400 uppercase tracking-widest block mb-1">
-                    Maricá & Região Oceânica
-                  </span>
-                  <span className="text-sm font-bold text-white">
-                    Padrão Técnico Construtora Transformar
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1528] via-transparent to-transparent opacity-85 pointer-events-none" />
+                <div className="absolute bottom-4 left-4 right-4 pointer-events-none z-10 flex items-end justify-between">
+                  <div>
+                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest block mb-0.5">
+                      Etapa 0{activeStep.number} • Maricá & Região
+                    </span>
+                    <span className="text-sm font-bold text-white drop-shadow">
+                      {activeStep.title}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-semibold text-slate-300 bg-slate-950/60 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-sm">
+                    {safeIndex + 1} / {steps.length}
                   </span>
                 </div>
+              </div>
+
+              {/* Thumbnails strip for fast visual navigation across all 6 steps */}
+              <div className="grid grid-cols-6 gap-2 pt-1">
+                {steps.map((s, idx) => {
+                  const isCur = idx === safeIndex;
+                  const thumbSrc = s.image || `/images/etapa${idx + 1}.jpg`;
+                  return (
+                    <button
+                      key={s.number || idx}
+                      type="button"
+                      onClick={() => setActiveStepIndex(idx)}
+                      title={`Ver Etapa 0${s.number}: ${s.title}`}
+                      className={`relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                        isCur 
+                          ? 'border-amber-400 ring-2 ring-amber-400/40 scale-105 shadow-md shadow-amber-500/20' 
+                          : 'border-white/10 opacity-60 hover:opacity-100 hover:border-slate-500'
+                      }`}
+                    >
+                      <img
+                        src={thumbSrc}
+                        alt={`Miniatura Etapa 0${s.number}`}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                      />
+                      <span className={`absolute bottom-0 inset-x-0 text-[9px] font-bold text-center py-0.5 bg-black/70 ${
+                        isCur ? 'text-amber-400' : 'text-white'
+                      }`}>
+                        0{s.number}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useMember } from '../context/MemberContext';
 import { Project } from '../types';
 import { SectionTabKey, SiteContent } from '../types/siteContent';
+import { MediaView } from './MediaView';
 import { 
   validateVideoDuration, 
   isVideoMedia, 
@@ -1137,6 +1138,37 @@ export const SiteEditorModal: React.FC = () => {
                               />
                             </label>
                           </div>
+                          {step.image && (
+                            <div className="mt-2 flex items-center gap-3 p-2 bg-slate-100 rounded-lg border border-slate-200">
+                              <div className="w-16 h-12 rounded overflow-hidden bg-slate-900 shrink-0 border border-slate-300">
+                                <MediaView
+                                  src={step.image}
+                                  alt={step.title}
+                                  className="w-full h-full object-cover"
+                                  autoPlay={false}
+                                  showBadge={false}
+                                />
+                              </div>
+                              <div className="text-[11px] text-slate-600 truncate flex-1">
+                                <span className="font-semibold block text-slate-800">Mídia configurada:</span>
+                                <span className="truncate block font-mono text-[10px] text-slate-500">{step.image}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updatedSteps = [...draftContent.timeline.steps];
+                                  updatedSteps[idx] = { ...step, image: '' };
+                                  setDraftContent({
+                                    ...draftContent,
+                                    timeline: { ...draftContent.timeline, steps: updatedSteps }
+                                  });
+                                }}
+                                className="text-[10px] font-semibold text-rose-600 hover:text-rose-700 hover:underline shrink-0"
+                              >
+                                Remover
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
